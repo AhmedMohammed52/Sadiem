@@ -1,0 +1,207 @@
+@import url("https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap");
+
+/* ========================================
+   SADEEM ADMIN DESIGN SYSTEM
+======================================== */
+
+.admin-layout {
+  --admin-primary: #4059e8;
+  --admin-primary-hover: #3048d5;
+  --admin-primary-light: #eef0ff;
+
+  --admin-background: #f5f6fa;
+  --admin-surface: #ffffff;
+
+  --admin-text-primary: #22252d;
+  --admin-text-secondary: #777d8a;
+  --admin-text-muted: #a0a5b1;
+
+  --admin-border: #e9ebf0;
+
+  --admin-success: #16a36a;
+  --admin-success-light: #e8f7f0;
+
+  --admin-danger: #e05252;
+  --admin-danger-light: #fdecec;
+
+  --admin-warning: #e6a23c;
+  --admin-warning-light: #fff6e5;
+
+  --admin-font-arabic: "Alexandria", sans-serif;
+  --admin-font-english: "Inter", sans-serif;
+
+  --admin-sidebar-width: 260px;
+  --admin-header-height: 72px;
+
+  --admin-radius-sm: 8px;
+  --admin-radius-md: 12px;
+  --admin-radius-lg: 16px;
+
+  --admin-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --admin-shadow-md: 0 4px 12px rgba(30, 35, 60, 0.05);
+
+  display: flex;
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+  background: var(--admin-background);
+  color: var(--admin-text-primary);
+  font-family: var(--admin-font-arabic);
+  direction: rtl;
+  font-size: 13px;
+  line-height: 1.7;
+  box-sizing: border-box;
+}
+
+.admin-layout *,
+.admin-layout *::before,
+.admin-layout *::after {
+  box-sizing: border-box;
+}
+
+.admin-layout button,
+.admin-layout input,
+.admin-layout textarea,
+.admin-layout select {
+  font: inherit;
+}
+
+.admin-layout button {
+  cursor: pointer;
+}
+
+.admin-layout a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.admin-layout img {
+  max-width: 100%;
+  display: block;
+}
+
+.admin-layout ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.admin-layout .font-english {
+  font-family: var(--admin-font-english);
+  direction: ltr;
+}
+
+/* ========================================
+   COMMON UTILITIES
+======================================== */
+
+.admin-layout .admin-page {
+  width: 100%;
+  min-width: 0;
+}
+
+.admin-layout .admin-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.admin-layout .admin-page-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--admin-text-primary);
+}
+
+.admin-layout .admin-page-description {
+  font-size: 12px;
+  color: var(--admin-text-secondary);
+  margin-top: 4px;
+}
+
+/* ========================================
+   SCROLLBAR
+======================================== */
+
+.admin-layout *::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.admin-layout *::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-layout *::-webkit-scrollbar-thumb {
+  background: #d9dce5;
+  border-radius: 20px;
+}
+
+.admin-layout *::-webkit-scrollbar-thumb:hover {
+  background: #b8bdca;
+}
+
+/* ========================================
+   ADMIN LAYOUT
+======================================== */
+
+.admin-layout .admin-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin-right: var(--admin-sidebar-width);
+}
+
+.admin-layout .admin-content {
+  flex: 1;
+  padding: 28px;
+  min-width: 0;
+}
+
+/* ========================================
+   RESPONSIVE
+======================================== */
+
+@media (max-width: 1024px) {
+  .admin-layout {
+    --admin-sidebar-width: 230px;
+  }
+
+  .admin-layout .admin-content {
+    padding: 22px;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-layout .admin-main {
+    margin-right: 0;
+  }
+
+  .admin-layout .admin-content {
+    padding: 18px 14px;
+  }
+
+  .admin-layout .admin-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: rgba(20, 25, 40, 0.35);
+    z-index: 90;
+  }
+
+  .admin-layout .admin-page-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-layout .admin-page-title {
+    font-size: 18px;
+  }
+}
