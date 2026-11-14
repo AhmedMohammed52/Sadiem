@@ -3,8 +3,10 @@ import { X } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { getStorefrontCategories } from "../../services/categoriesService";
+import useBodyScrollLock from "../../hooks/useBodyScrollLock";
 
 export default function MobileMenuDrawer({ isOpen, onClose }) {
+  useBodyScrollLock(isOpen);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
 

@@ -5,8 +5,10 @@ import WishlistEmpty from "./WishlistEmpty";
 import { useWishlist } from "../../../context/WishlistContext";
 import { useCart } from "../../../context/CartContext";
 import { useToast } from "../../../context/ToastContext";
+import useBodyScrollLock from "../../../hooks/useBodyScrollLock";
 
 export default function WishlistDrawer({ isOpen, onClose }) {
+  useBodyScrollLock(isOpen);
   const { wishlist, removeFromWishlist, clearWishlist } = useWishlist();
   const { addToCart } = useCart();
   const { showToast } = useToast();

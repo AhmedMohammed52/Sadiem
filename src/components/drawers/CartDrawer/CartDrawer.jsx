@@ -3,6 +3,7 @@ import CartItem from "./CartItem";
 import CartEmpty from "./CartEmpty";
 import { useCart } from "../../../context/CartContext";
 import { useToast } from "../../../context/ToastContext";
+import useBodyScrollLock from "../../../hooks/useBodyScrollLock";
 
 export default function CartDrawer({ isOpen, onClose }) {
   const {
@@ -13,6 +14,8 @@ export default function CartDrawer({ isOpen, onClose }) {
     decreaseQuantity,
     removeFromCart,
   } = useCart();
+
+  useBodyScrollLock(isOpen);
   const { showToast } = useToast();
 
   return (

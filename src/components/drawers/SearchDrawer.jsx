@@ -3,8 +3,10 @@ import { Link } from "react-router-dom";
 import { X, Search, LoaderCircle } from "lucide-react";
 
 import { searchStorefrontProducts } from "../../services/productsService";
+import useBodyScrollLock from "../../hooks/useBodyScrollLock";
 
 export default function SearchDrawer({ isOpen, onClose }) {
+  useBodyScrollLock(isOpen);
   const [query, setQuery] = useState("");
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
