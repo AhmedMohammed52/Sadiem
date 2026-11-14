@@ -1,4 +1,3 @@
-
 @import url("https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&family=El+Messiri:wght@400;500;600;700&family=Marcellus&display=swap");
 
 @import "tailwindcss" source(none);
@@ -269,216 +268,177 @@
 .sadeem-preloader {
   position: fixed;
   inset: 0;
-  z-index: 9999;
+  z-index: 99999;
 
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
 
-  /* Let the website show behind the preloader */
+  width: 100%;
+  height: 100%;
+  min-height: 100dvh;
+
+  overflow: hidden;
+  isolation: isolate;
+
+  /* خلفية ثابتة ومعتمة بالكامل */
   background: radial-gradient(
     ellipse at 50% 48%,
-    rgba(255, 237, 245, 0.76) 0%,
-    rgba(255, 248, 251, 0.58) 45%,
-    rgba(255, 255, 255, 0.42) 100%
+    #fff0f6 0%,
+    #fff8fb 45%,
+    #ffffff 100%
   );
-
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
 
   opacity: 1;
   visibility: visible;
+  pointer-events: auto;
 
   transition:
     opacity 500ms ease,
     visibility 0s linear 500ms;
 }
 
+/* إخفاء شاشة التحميل */
 .sadeem-preloader.is-hidden {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
 }
 
-/* ========================================
-   PINK GLOW BUBBLES
-======================================== */
-
-.sadeem-preloader::before,
-.sadeem-preloader::after {
-  content: "";
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-  filter: blur(65px);
-
-  animation: pink-float 7s ease-in-out infinite alternate;
-}
-
-.sadeem-preloader::before {
-  width: 320px;
-  height: 320px;
-  top: 8%;
-  left: 12%;
-
-  background: rgba(244, 170, 200, 0.42);
-}
-
-.sadeem-preloader::after {
-  width: 360px;
-  height: 360px;
-  right: 8%;
-  bottom: 5%;
-
-  background: rgba(232, 173, 210, 0.35);
-
-  animation-delay: -3s;
-}
-
-/* ========================================
-   CONTENT
-======================================== */
-
+/* محتوى شاشة التحميل */
 .sadeem-preloader-content {
   position: relative;
-  z-index: 1;
+  z-index: 2;
 
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
 
-  animation: sadeem-reveal 900ms ease both;
+  text-align: center;
+  padding: 24px;
 }
 
-/* Additional Pink Glow */
-
-.sadeem-preloader-content::before,
-.sadeem-preloader-content::after {
-  content: "";
-  position: absolute;
-  z-index: -1;
-
-  border-radius: 50%;
-  pointer-events: none;
-  filter: blur(45px);
-
-  animation: pink-float 6s ease-in-out infinite alternate;
-}
-
-.sadeem-preloader-content::before {
-  width: 150px;
-  height: 150px;
-  top: -100px;
-  right: -120px;
-
-  background: rgba(255, 190, 215, 0.5);
-}
-
-.sadeem-preloader-content::after {
-  width: 130px;
-  height: 130px;
-  bottom: -100px;
-  left: -110px;
-
-  background: rgba(241, 180, 205, 0.45);
-
-  animation-delay: -2s;
-}
-
-/* ========================================
-   LOGO
-======================================== */
-
+/* اللوجو */
 .sadeem-logo {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 15px;
+  gap: 14px;
 
-  color: #242124;
+  animation: sadeem-logo-appear 900ms ease both;
 }
 
 .sadeem-logo-ar {
-  font-family: "El Messiri", serif;
-  font-size: 42px;
-  font-weight: 600;
-  line-height: 1.3;
-}
-
-.sadeem-logo-en {
-  font-family: "Cairo", sans-serif;
-  font-size: 27px;
-  font-weight: 500;
-  letter-spacing: 4px;
+  font-family: "El Messiri", "Cairo", sans-serif;
+  font-size: clamp(42px, 8vw, 64px);
+  font-weight: 700;
+  color: #171717;
+  line-height: 1;
 }
 
 .sadeem-logo-divider {
+  display: block;
   width: 1px;
-  height: 32px;
-
-  background: #d98eaa;
-  opacity: 0.8;
+  height: 38px;
+  background: #e7b5c8;
 }
 
-/* ========================================
-   TAGLINE
-======================================== */
-
-.sadeem-tagline {
-  margin-top: 12px;
-
-  color: #a77b8c;
-  font-family: "Cairo", sans-serif;
-  font-size: 13px;
+.sadeem-logo-en {
+  font-family: "Marcellus", serif;
+  font-size: clamp(22px, 4vw, 30px);
   font-weight: 400;
-  letter-spacing: 0.5px;
+  letter-spacing: 5px;
+  color: #171717;
 }
 
-/* ========================================
-   LOADING LINE
-======================================== */
+/* الجملة أسفل اللوجو */
+.sadeem-tagline {
+  margin-top: 18px;
 
+  font-family: "Cairo", sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 1px;
+
+  color: #777;
+  animation: sadeem-fade-up 900ms ease 200ms both;
+}
+
+/* شريط التحميل */
 .sadeem-loader {
-  position: relative;
+  width: 110px;
+  height: 3px;
 
-  width: 150px;
-  height: 2px;
-  margin-top: 35px;
+  margin-top: 30px;
 
   overflow: hidden;
-  border-radius: 10px;
+  border-radius: 20px;
+  background: #f3dce6;
 
-  background: #f8e5ed;
-
-  box-shadow: 0 0 12px rgba(217, 142, 170, 0.12);
+  animation: sadeem-fade-up 900ms ease 350ms both;
 }
 
 .sadeem-loader span {
-  position: absolute;
-  top: 0;
-  left: 0;
-
-  width: 38%;
+  display: block;
+  width: 45%;
   height: 100%;
 
   border-radius: inherit;
+  background: linear-gradient(90deg, #d98ba9, #f0b6cd, #d98ba9);
 
-  background: linear-gradient(90deg, #e8a9c2, #c96e96, #e8a9c2);
-
-  box-shadow: 0 0 12px rgba(201, 110, 150, 0.5);
-
-  animation: sadeem-loading 1.4s ease-in-out infinite;
+  animation: sadeem-loading 1.3s ease-in-out infinite;
 }
 
-/* ========================================
-   ANIMATIONS
-======================================== */
+/* فقاعات الإضاءة الوردية */
+.sadeem-preloader::before,
+.sadeem-preloader::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
 
-@keyframes sadeem-reveal {
+  width: 280px;
+  height: 280px;
+
+  border-radius: 50%;
+  pointer-events: none;
+
+  background: radial-gradient(
+    circle,
+    rgba(242, 184, 207, 0.25) 0%,
+    rgba(242, 184, 207, 0.1) 45%,
+    transparent 70%
+  );
+
+  animation: sadeem-glow 5s ease-in-out infinite alternate;
+}
+
+.sadeem-preloader::before {
+  top: -100px;
+  right: -90px;
+}
+
+.sadeem-preloader::after {
+  bottom: -120px;
+  left: -90px;
+  animation-delay: 1.5s;
+}
+
+/* Animations */
+@keyframes sadeem-loading {
+  0% {
+    transform: translateX(-120%);
+  }
+
+  100% {
+    transform: translateX(250%);
+  }
+}
+
+@keyframes sadeem-logo-appear {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(15px);
   }
 
   to {
@@ -487,79 +447,51 @@
   }
 }
 
-@keyframes sadeem-loading {
+@keyframes sadeem-fade-up {
   from {
-    transform: translateX(-110%);
+    opacity: 0;
+    transform: translateY(10px);
   }
 
   to {
-    transform: translateX(390%);
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-@keyframes pink-float {
+@keyframes sadeem-glow {
   from {
-    transform: translate3d(0, -10px, 0) scale(0.95);
+    transform: scale(0.9);
+    opacity: 0.6;
   }
 
   to {
-    transform: translate3d(12px, 15px, 0) scale(1.08);
+    transform: scale(1.15);
+    opacity: 1;
   }
 }
 
-/* ========================================
-   RESPONSIVE
-======================================== */
-
+/* Responsive */
 @media (max-width: 480px) {
   .sadeem-logo {
-    gap: 11px;
-  }
-
-  .sadeem-logo-ar {
-    font-size: 36px;
-  }
-
-  .sadeem-logo-en {
-    font-size: 23px;
-    letter-spacing: 3px;
+    gap: 10px;
   }
 
   .sadeem-logo-divider {
-    height: 27px;
+    height: 30px;
   }
 
-  .sadeem-preloader::before {
-    width: 230px;
-    height: 230px;
-  }
-
-  .sadeem-preloader::after {
-    width: 250px;
-    height: 250px;
+  .sadeem-tagline {
+    font-size: 13px;
   }
 }
 
-/* ========================================
-   ACCESSIBILITY
-======================================== */
-
+/* تقليل الحركة حسب إعدادات الجهاز */
 @media (prefers-reduced-motion: reduce) {
-  .sadeem-preloader,
-  .sadeem-preloader-content {
-    animation: none;
-    transition: none;
-  }
-
+  .sadeem-preloader *,
   .sadeem-preloader::before,
-  .sadeem-preloader::after,
-  .sadeem-preloader-content::before,
-  .sadeem-preloader-content::after {
-    animation: none;
-  }
-
-  .sadeem-loader span {
-    animation: none;
-    width: 100%;
+  .sadeem-preloader::after {
+    animation: none !important;
+    transition: none !important;
   }
 }
