@@ -7,8 +7,8 @@ import CategoriesTable from "./CategoriesTable";
 
 import CategoryDrawer from "../../components/ui/drawer/CategoryDrawer";
 import PageHeader from "../../components/common/PageHeader";
-import StatsSkeleton from "../../components/common/StatsSkeleton";
-import TableSkeleton from "../../components/common/TableSkeleton";
+import StatsSkeleton from "../../components/common/Skelton/StatsSkeleton";
+import TableSkeleton from "../../components/common/Skelton/TableSkeleton";
 
 import {
   getCategories,

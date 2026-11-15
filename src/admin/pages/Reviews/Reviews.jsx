@@ -14,8 +14,8 @@ import ReviewsFilters from "./ReviewsFilters";
 import ReviewsList from "./ReviewsList";
 import ReviewDetailsDrawer from "../../components/ui/drawer/ReviewDetailsDrawer";
 import PageHeader from "../../components/common/PageHeader";
-import StatsSkeleton from "../../components/common/StatsSkeleton";
-import ReviewsSkeleton from "../../components/common/ReviewsSkeleton";
+import StatsSkeleton from "../../components/common/Skelton/StatsSkeleton";
+import ReviewsSkeleton from "./ReviewsSkeleton";
 
 import ConfirmationDialog from "../../components/ui/ConfirmationDialog";
 

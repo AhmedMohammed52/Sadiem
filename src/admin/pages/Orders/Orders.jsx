@@ -10,8 +10,8 @@ import OrdersFilters from "./OrdersFilters";
 import OrdersTable from "./OrdersTable";
 import OrderDetailsDrawer from "../../components/ui/drawer/OrderDetailsDrawer";
 import PageHeader from "../../components/common/PageHeader";
-import StatsSkeleton from "../../components/common/StatsSkeleton";
-import TableSkeleton from "../../components/common/TableSkeleton";
+import StatsSkeleton from "../../components/common/Skelton/StatsSkeleton";
+import TableSkeleton from "../../components/common/Skelton/TableSkeleton";
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);

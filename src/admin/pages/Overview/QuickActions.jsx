@@ -1,26 +1,6 @@
-import { ShoppingBag, Package, Plus, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
-
-const ACTIONS = [
-  {
-    title: "إضافة منتج جديد",
-    description: "أضف منتجًا إلى المتجر",
-    icon: Plus,
-    to: "/admin/products",
-  },
-  {
-    title: "متابعة الطلبات",
-    description: "راجع الطلبات وحالاتها",
-    icon: ShoppingBag,
-    to: "/admin/orders",
-  },
-  {
-    title: "إدارة التصنيفات",
-    description: "نظم أقسام ومنتجات المتجر",
-    icon: Package,
-    to: "/admin/categories",
-  },
-];
+import { ACTIONS } from "../../data/quickActionsConfig";
 
 export default function QuickActions() {
   return (

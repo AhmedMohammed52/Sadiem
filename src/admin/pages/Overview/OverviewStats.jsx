@@ -1,43 +1,11 @@
 import { useEffect, useState } from "react";
 
-import {
-  ShoppingBag,
-  ClipboardList,
-  Package,
-  AlertTriangle,
-} from "lucide-react";
+import { STAT_CONFIG } from "../../data/overviewStatsConfig";
 
 import { getOverviewStats } from "../../../services/overviewServices";
 
 import StatCard from "../../components/common/StatCard";
-import StatsSkeleton from "../../components/common/StatsSkeleton";
-
-const STAT_CONFIG = [
-  {
-    key: "newOrders",
-    title: "طلبات جديدة",
-    icon: ShoppingBag,
-    color: "bg-blue-50 text-blue-600",
-  },
-  {
-    key: "totalOrders",
-    title: "إجمالي الطلبات",
-    icon: ClipboardList,
-    color: "bg-violet-50 text-violet-600",
-  },
-  {
-    key: "totalProducts",
-    title: "إجمالي المنتجات",
-    icon: Package,
-    color: "bg-emerald-50 text-emerald-600",
-  },
-  {
-    key: "lowStock",
-    title: "مخزون منخفض",
-    icon: AlertTriangle,
-    color: "bg-orange-50 text-orange-600",
-  },
-];
+import StatsSkeleton from "../../components/common/Skelton/StatsSkeleton";
 
 export default function OverviewStats() {
   const [stats, setStats] = useState(null);

@@ -1,11 +1,4 @@
-import { Store, Share2, SlidersHorizontal, UserRound } from "lucide-react";
-
-export const SETTINGS_SECTIONS = [
-  { id: "store", label: "بيانات المتجر", icon: Store },
-  { id: "social", label: "التواصل الاجتماعي", icon: Share2 },
-  { id: "general", label: "التحكم في المتجر", icon: SlidersHorizontal },
-  { id: "account", label: "حساب المدير", icon: UserRound },
-];
+import { SETTINGS_SECTIONS } from "../../data/setting";
 
 export default function SettingsNavigation({ activeSection, onChange }) {
   return (

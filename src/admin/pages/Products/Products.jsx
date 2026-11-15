@@ -7,8 +7,8 @@ import ProductsTable from "./ProductsTable";
 
 import ProductDrawer from "../../components/ui/drawer/ProductDrawer";
 import PageHeader from "../../components/common/PageHeader";
-import StatsSkeleton from "../../components/common/StatsSkeleton";
-import TableSkeleton from "../../components/common/TableSkeleton";
+import StatsSkeleton from "../../components/common/Skelton/StatsSkeleton";
+import TableSkeleton from "../../components/common/Skelton/TableSkeleton";
 
 import {
   getProducts,
@@ -100,7 +100,6 @@ export default function Products() {
     setIsDrawerOpen(true);
   };
 
-  // نسخ المنتج
   const handleDuplicateProduct = (product) => {
     setError("");
 
@@ -198,19 +197,16 @@ export default function Products() {
     });
   };
 
-  // فتح نافذة تأكيد الحذف
   const handleDelete = (product) => {
     setDeletingProduct(product);
   };
 
-  // إلغاء الحذف
   const handleCancelDelete = () => {
     if (isDeleting) return;
 
     setDeletingProduct(null);
   };
 
-  // تنفيذ الحذف بعد التأكيد
   const handleConfirmDelete = async () => {
     if (!deletingProduct || isDeleting) return;
 

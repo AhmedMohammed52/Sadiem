@@ -4,21 +4,7 @@ import {
   FilterSelect,
 } from "../../components/common/FilterBar";
 
-const statuses = [
-  { value: "all", label: "كل الحالات" },
-  { value: "new", label: "جديد" },
-  { value: "processing", label: "قيد التجهيز" },
-  { value: "shipped", label: "تم الشحن" },
-  { value: "completed", label: "مكتمل" },
-  { value: "cancelled", label: "ملغي" },
-];
-
-const payments = [
-  { value: "all", label: "كل طرق الدفع" },
-  { value: "cod", label: "الدفع عند الاستلام" },
-  { value: "vodafone", label: "فودافون كاش" },
-  { value: "instapay", label: "إنستاباي" },
-];
+import { ORDER_STATUSES, PAYMENT_METHODS } from "../../data/order";
 
 export default function OrdersFilters({
   search,
@@ -48,14 +34,14 @@ export default function OrdersFilters({
       <FilterSelect
         value={statusFilter}
         onChange={setStatusFilter}
-        options={statuses}
+        options={ORDER_STATUSES}
         className="sm:w-40"
       />
 
       <FilterSelect
         value={paymentFilter}
         onChange={setPaymentFilter}
-        options={payments}
+        options={PAYMENT_METHODS}
         className="sm:w-44"
       />
     </FilterBar>

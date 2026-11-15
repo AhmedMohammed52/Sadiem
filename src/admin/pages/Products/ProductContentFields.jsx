@@ -1,34 +1,6 @@
 import { useState } from "react";
 import { Plus, Trash2, Sparkles, ClipboardPaste } from "lucide-react";
-
-const DETAIL_TEMPLATES = {
-  perfumes: [
-    { label: "الحجم", value: "" },
-    { label: "التركيز", value: "" },
-    { label: "نوع العطر", value: "" },
-    { label: "النفحات العليا", value: "" },
-    { label: "النفحات الوسطى", value: "" },
-    { label: "النفحات القاعدية", value: "" },
-  ],
-  body: [
-    { label: "الحجم", value: "" },
-    { label: "نوع البشرة", value: "" },
-    { label: "الملمس", value: "" },
-    { label: "طريقة الاستخدام", value: "" },
-  ],
-  skincare: [
-    { label: "الحجم", value: "" },
-    { label: "نوع البشرة", value: "" },
-    { label: "الفوائد", value: "" },
-    { label: "طريقة الاستخدام", value: "" },
-  ],
-  hair: [
-    { label: "الحجم", value: "" },
-    { label: "نوع الشعر", value: "" },
-    { label: "الفوائد", value: "" },
-    { label: "طريقة الاستخدام", value: "" },
-  ],
-};
+import { DETAIL_TEMPLATES } from "../../data/productDetailTemplates";
 
 const FIELD_STYLES =
   "w-full rounded-lg border border-[#E9EBF0] bg-white px-3 text-sm outline-none transition focus:border-[#4059E8]";

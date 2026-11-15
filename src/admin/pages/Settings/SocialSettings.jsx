@@ -1,33 +1,5 @@
-import { Globe, Camera, Music2, MessageCircle } from "lucide-react";
-
 import { SettingField, SettingsCard } from "./SettingsFields";
-
-const SOCIALS = [
-  {
-    id: "facebook",
-    label: "Facebook",
-    placeholder: "https://facebook.com/...",
-    icon: Globe,
-  },
-  {
-    id: "instagram",
-    label: "Instagram",
-    placeholder: "https://instagram.com/...",
-    icon: Camera,
-  },
-  {
-    id: "tiktok",
-    label: "TikTok",
-    placeholder: "https://tiktok.com/@...",
-    icon: Music2,
-  },
-  {
-    id: "whatsapp",
-    label: "WhatsApp",
-    placeholder: "201xxxxxxxxx أو رابط واتساب",
-    icon: MessageCircle,
-  },
-];
+import { SOCIALS } from "../../data/setting";
 
 export default function SocialSettings({ settings, update }) {
   return (

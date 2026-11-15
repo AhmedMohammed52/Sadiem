@@ -1,55 +1,14 @@
 import { useEffect, useState } from "react";
 import { NavLink, Link, useNavigate } from "react-router-dom";
 
-import {
-  LayoutDashboard,
-  Package,
-  Tags,
-  ShoppingBag,
-  Settings,
-  ExternalLink,
-  X,
-  Store,
-  MessageSquareText,
-  LogOut,
-} from "lucide-react";
+import { NAV_ITEMS } from "../../data/adminNavigation";
+
+import { ExternalLink, X, Store, LogOut } from "lucide-react";
 
 import { useAuth } from "../../../context/AuthContext";
 import { getSettings } from "../../../services/settingsService";
 
-const NAV_ITEMS = [
-  {
-    title: "الرئيسية",
-    path: "/admin",
-    icon: LayoutDashboard,
-    end: true,
-  },
-  {
-    title: "المنتجات",
-    path: "/admin/products",
-    icon: Package,
-  },
-  {
-    title: "التصنيفات",
-    path: "/admin/categories",
-    icon: Tags,
-  },
-  {
-    title: "الطلبات",
-    path: "/admin/orders",
-    icon: ShoppingBag,
-  },
-  {
-    title: "التقييمات",
-    path: "/admin/reviews",
-    icon: MessageSquareText,
-  },
-  {
-    title: "إعدادات المتجر",
-    path: "/admin/settings",
-    icon: Settings,
-  },
-];
+import useBodyScrollLock from "../../../hooks/useBodyScrollLock";
 
 const Sidebar = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
@@ -57,6 +16,8 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   const [loggingOut, setLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState("");
+
+  useBodyScrollLock(isOpen);
 
   // Store Identity
   const [storeInfo, setStoreInfo] = useState({

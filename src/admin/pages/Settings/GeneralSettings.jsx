@@ -1,13 +1,7 @@
 import { SettingsCard } from "./SettingsFields";
+import { General_SORT_OPTIONS } from "../../data/setting";
 
 const PAGE_SIZES = [8, 12, 16];
-
-const SORT_OPTIONS = [
-  { value: "default", label: "الترتيب الافتراضي" },
-  { value: "priceAsc", label: "السعر: من الأقل للأعلى" },
-  { value: "priceDesc", label: "السعر: من الأعلى للأقل" },
-  { value: "nameAsc", label: "الاسم: أبجديًا" },
-];
 
 export default function GeneralSettings({ settings, update }) {
   const general = settings.general;
@@ -50,7 +44,7 @@ export default function GeneralSettings({ settings, update }) {
             }
             className="h-10 w-full rounded-lg border border-[#E9EBF0] bg-white px-3 text-sm text-[#22252D] outline-none transition focus:border-[#4059E8]"
           >
-            {SORT_OPTIONS.map((option) => (
+            {General_SORT_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>

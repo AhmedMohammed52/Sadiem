@@ -1,4 +1,4 @@
-import StatsGrid from "./StatsGrid";
+import StatsGrid from "../StatsGrid";
 import Skeleton from "./Skeleton";
 
 export default function StatsSkeleton({ columns = 4 }) {
