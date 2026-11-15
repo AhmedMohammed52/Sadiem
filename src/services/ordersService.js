@@ -101,71 +101,30 @@ export const createOrder = async (orderData, cartItems) => {
     throw new Error("لا يمكن إنشاء طلب بدون منتجات.");
   }
 
-  const subtotal = Number(orderData.subtotal || 0);
-  const discount = Number(orderData.discount || 0);
-  const shipping = Number(orderData.shipping || 0);
+  const itemsPayload = cartItems.map((item) => ({
+    product_id: item.productId || item.product_id || item.id,
+    quantity: Number(item.quantity),
+  }));
 
-  const orderPayload = {
-    customer_name: orderData.customer_name,
-    phone: orderData.phone,
-    governorate: orderData.governorate,
-    city: orderData.city,
-    address: orderData.address,
-    notes: orderData.notes || "",
-    subtotal,
-    discount,
-    shipping,
-    total: subtotal - discount + shipping,
-    payment_method: orderData.payment_method || "cod",
-  };
-
-  const { data: order, error: orderError } = await supabase
-    .from("orders")
-    .insert(orderPayload)
-    .select("id, order_number")
-    .single();
-
-  if (orderError) throw orderError;
-
-  const itemsPayload = cartItems.map((item) => {
-    const quantity = Number(item.quantity);
-    const unitPrice = Number(item.price);
-
-    if (
-      !Number.isFinite(quantity) ||
-      quantity <= 0 ||
-      !Number.isFinite(unitPrice) ||
-      unitPrice < 0
-    ) {
-      throw new Error("بيانات أحد المنتجات غير صحيحة.");
-    }
-
-    const productId = item.productId || item.product_id || item.id;
-
-    const validUUID =
-      typeof productId === "string" &&
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-        productId,
-      );
-
-    return {
-      order_id: order.id,
-      product_id: validUUID ? productId : null,
-      product_name: item.name,
-      product_image_url: item.image || "",
-      unit_price: unitPrice,
-      quantity,
-      line_total: unitPrice * quantity,
-    };
+  const { data, error } = await supabase.rpc("create_public_order", {
+    p_customer_name: orderData.customer_name,
+    p_phone: orderData.phone,
+    p_governorate: orderData.governorate,
+    p_city: orderData.city,
+    p_address: orderData.address,
+    p_notes: orderData.notes || "",
+    p_items: itemsPayload,
   });
 
-  const { error: itemsError } = await supabase
-    .from("order_items")
-    .insert(itemsPayload);
+  if (error) {
+    console.error("Create public order RPC error:", error);
+    throw error;
+  }
 
-  if (itemsError) {
-    await supabase.from("orders").delete().eq("id", order.id);
-    throw itemsError;
+  const order = Array.isArray(data) ? data[0] : data;
+
+  if (!order?.id || !order?.order_number) {
+    throw new Error("لم يتم استلام بيانات الطلب من قاعدة البيانات.");
   }
 
   return order;
