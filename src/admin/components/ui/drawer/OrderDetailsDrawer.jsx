@@ -16,7 +16,8 @@ import {
 
 import BaseDrawer from "../../common/Drawer";
 
-import OrderStatus, { ORDER_STATUSES } from "../../../pages/Orders/OrderStatus";
+import OrderStatus from "../../../pages/Orders/OrderStatus";
+import { ORDER_STATUSES } from "../../../data/order";
 
 const PAYMENT_METHODS = {
   cod: "الدفع عند الاستلام",

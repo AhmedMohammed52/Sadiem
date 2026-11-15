@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import defaultSettings from "../../data/setting";
+import {defaultSettings} from "../../data/setting";
 import {
   getSettings,
   saveSettings,
