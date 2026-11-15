@@ -6,6 +6,26 @@ import { ArrowLeft } from "lucide-react";
 import { getRecentOrders } from "../../../services/overviewServices";
 import { ORDER_STATUSES } from "../../data/orderStatuses";
 
+import Skeleton from "../../components/common/Skeleton";
+
+function RecentOrdersSkeleton() {
+  return (
+    <>
+      {Array.from({ length: 5 }).map((_, index) => (
+        <tr key={index} className="border-b border-[#F0F1F5] last:border-0">
+          {Array.from({ length: 5 }).map((_, colIndex) => (
+            <td key={colIndex} className="px-5 py-5">
+              <Skeleton
+                className={`h-3 ${colIndex === 1 ? "w-24" : "w-16"} max-w-full`}
+              />
+            </td>
+          ))}
+        </tr>
+      ))}
+    </>
+  );
+}
+
 export default function RecentOrders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -75,14 +95,7 @@ export default function RecentOrders() {
 
           <tbody>
             {loading ? (
-              <tr>
-                <td
-                  colSpan={5}
-                  className="px-5 py-10 text-center text-xs text-[#A0A5B1]"
-                >
-                  جاري تحميل أحدث الطلبات...
-                </td>
-              </tr>
+              <RecentOrdersSkeleton />
             ) : error ? (
               <tr>
                 <td colSpan={5} className="px-5 py-8 text-center">

@@ -10,6 +10,8 @@ import OrdersFilters from "./OrdersFilters";
 import OrdersTable from "./OrdersTable";
 import OrderDetailsDrawer from "../../components/ui/drawer/OrderDetailsDrawer";
 import PageHeader from "../../components/common/PageHeader";
+import StatsSkeleton from "../../components/common/StatsSkeleton";
+import TableSkeleton from "../../components/common/TableSkeleton";
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);
@@ -98,7 +100,6 @@ export default function Orders() {
         prev?.id === orderId ? { ...prev, status: updatedOrder.status } : prev,
       );
 
-      // إغلاق الدراور بعد نجاح الحفظ
       setIsDrawerOpen(false);
 
       return true;
@@ -120,22 +121,40 @@ export default function Orders() {
         description="إدارة ومتابعة طلبات العملاء وحالات الشحن."
       />
 
-      {isLoading ? (
-        <div className="flex min-h-60 items-center justify-center">
-          <p className="text-sm text-[#9298A4]">جاري تحميل الطلبات...</p>
-        </div>
-      ) : error ? (
-        <div className="rounded-xl border border-red-100 bg-red-50 p-5 text-center">
+      {error && (
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-red-100 bg-red-50 p-4">
           <p className="text-sm text-red-600">{error}</p>
 
           <button
             type="button"
             onClick={fetchOrders}
-            className="mt-3 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-100"
+            className="shrink-0 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-100"
           >
             إعادة المحاولة
           </button>
         </div>
+      )}
+
+      {isLoading ? (
+        <>
+          <StatsSkeleton columns={4} />
+
+          <OrdersFilters
+            search={search}
+            setSearch={setSearch}
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+            paymentFilter={paymentFilter}
+            setPaymentFilter={setPaymentFilter}
+            resultsCount={0}
+          />
+
+          <TableSkeleton
+            columns={8}
+            rows={5}
+            tableClassName="w-full min-w-[1100px] text-right"
+          />
+        </>
       ) : (
         <>
           <OrdersStats orders={orders} />

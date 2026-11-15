@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Plus, LoaderCircle, AlertCircle } from "lucide-react";
+import { Plus, AlertCircle } from "lucide-react";
 
 import ProductStats from "./ProductStats";
 import ProductFilters from "./ProductFilters";
@@ -7,12 +7,16 @@ import ProductsTable from "./ProductsTable";
 
 import ProductDrawer from "../../components/ui/drawer/ProductDrawer";
 import PageHeader from "../../components/common/PageHeader";
+import StatsSkeleton from "../../components/common/StatsSkeleton";
+import TableSkeleton from "../../components/common/TableSkeleton";
 
 import {
   getProducts,
   saveProduct,
   deleteProduct,
 } from "../../../services/productsService";
+
+import ConfirmationDialog from "../../components/ui/ConfirmationDialog";
 
 export default function Products() {
   const [products, setProducts] = useState([]);
@@ -27,6 +31,9 @@ export default function Products() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
+
+  const [deletingProduct, setDeletingProduct] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const loadProducts = useCallback(async () => {
     setIsLoading(true);
@@ -99,23 +106,15 @@ export default function Products() {
 
     const duplicatedProduct = {
       ...product,
-
-      // منتج جديد وليس تعديلًا للمنتج الأصلي
       id: null,
-
-      // بيانات جديدة للمنتج
       name: `${product.name} - نسخة`,
       slug: "",
       sku: "",
-
-      // الاحتفاظ بنفس تفاصيل الصور مع نسخ ملفاتها لاحقًا
       images: (product.images || []).map((image) => ({
         ...image,
         id: undefined,
         isExisting: true,
       })),
-
-      // المنتج الجديد يبدأ كمسودة
       isPublished: false,
       isFeatured: false,
       stock: 0,
@@ -199,24 +198,38 @@ export default function Products() {
     });
   };
 
-  const handleDelete = async (product) => {
-    const confirmed = window.confirm(
-      `هل أنت متأكد من حذف المنتج "${product.name}"؟`,
-    );
+  // فتح نافذة تأكيد الحذف
+  const handleDelete = (product) => {
+    setDeletingProduct(product);
+  };
 
-    if (!confirmed) return;
+  // إلغاء الحذف
+  const handleCancelDelete = () => {
+    if (isDeleting) return;
+
+    setDeletingProduct(null);
+  };
+
+  // تنفيذ الحذف بعد التأكيد
+  const handleConfirmDelete = async () => {
+    if (!deletingProduct || isDeleting) return;
+
+    setIsDeleting(true);
+    setError("");
 
     try {
-      setError("");
-
-      await deleteProduct(product.id);
+      await deleteProduct(deletingProduct.id);
 
       setProducts((current) =>
-        current.filter((item) => item.id !== product.id),
+        current.filter((item) => item.id !== deletingProduct.id),
       );
+
+      setDeletingProduct(null);
     } catch (err) {
       console.error("Product deletion error:", err);
       setError(err.message || "تعذر حذف المنتج");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -248,10 +261,24 @@ export default function Products() {
       )}
 
       {isLoading ? (
-        <div className="flex min-h-64 flex-col items-center justify-center gap-3 rounded-xl border border-[#E9EBF0] bg-white">
-          <LoaderCircle size={28} className="animate-spin text-[#4059E8]" />
-          <p className="text-sm text-[#777D8A]">جاري تحميل المنتجات...</p>
-        </div>
+        <>
+          <StatsSkeleton columns={4} />
+
+          <ProductFilters
+            search={search}
+            setSearch={setSearch}
+            category={category}
+            setCategory={setCategory}
+            status={status}
+            setStatus={setStatus}
+          />
+
+          <TableSkeleton
+            columns={8}
+            rows={5}
+            tableClassName="w-full min-w-[1100px] text-right"
+          />
+        </>
       ) : (
         <>
           <ProductStats products={products} />
@@ -283,6 +310,21 @@ export default function Products() {
         onClose={handleCloseDrawer}
         onSave={handleSaveProduct}
         isSaving={isSaving}
+      />
+
+      <ConfirmationDialog
+        isOpen={!!deletingProduct}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        title="حذف المنتج"
+        description={
+          deletingProduct
+            ? `هل أنت متأكد من حذف "${deletingProduct.name}"؟ لا يمكن التراجع عن هذا الإجراء بعد الحذف.`
+            : ""
+        }
+        confirmText="نعم، احذف المنتج"
+        cancelText="إلغاء"
+        isLoading={isDeleting}
       />
     </div>
   );

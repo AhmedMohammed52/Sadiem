@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Plus, LoaderCircle, AlertCircle } from "lucide-react";
+import { Plus, AlertCircle } from "lucide-react";
 
 import CategoryStats from "./CategoryStats";
 import CategoryFilters from "./CategoryFilters";
@@ -7,6 +7,8 @@ import CategoriesTable from "./CategoriesTable";
 
 import CategoryDrawer from "../../components/ui/drawer/CategoryDrawer";
 import PageHeader from "../../components/common/PageHeader";
+import StatsSkeleton from "../../components/common/StatsSkeleton";
+import TableSkeleton from "../../components/common/TableSkeleton";
 
 import {
   getCategories,
@@ -14,6 +16,8 @@ import {
   updateCategoryStatus,
   deleteCategory,
 } from "../../../services/categoriesService";
+
+import ConfirmationDialog from "../../components/ui/ConfirmationDialog";
 
 export default function Categories() {
   const [categories, setCategories] = useState([]);
@@ -28,6 +32,10 @@ export default function Categories() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
+
+  const [deletingCategory, setDeletingCategory] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteBlocked, setDeleteBlocked] = useState(false);
 
   // تحميل التصنيفات وأعداد المنتجات
   const loadCategories = useCallback(async () => {
@@ -180,31 +188,47 @@ export default function Categories() {
   };
 
   // حذف تصنيف
-  const handleDeleteCategory = async (category) => {
+  const handleDeleteCategory = (category) => {
     const productsCount = getProductCount(category.id);
 
-    if (productsCount > 0) {
-      window.alert(
-        `لا يمكن حذف هذا التصنيف لأنه مرتبط بـ ${productsCount} منتج.`,
-      );
+    setDeletingCategory(category);
+    setDeleteBlocked(productsCount > 0);
+  };
+
+  // إغلاق نافذة التأكيد
+  const handleCancelDelete = () => {
+    if (isDeleting) return;
+
+    setDeletingCategory(null);
+    setDeleteBlocked(false);
+  };
+
+  // تأكيد الحذف
+  const handleConfirmDelete = async () => {
+    if (!deletingCategory || isDeleting) return;
+
+    if (deleteBlocked) {
+      handleCancelDelete();
       return;
     }
 
-    const confirmed = window.confirm(
-      `هل أنت متأكد من حذف تصنيف "${category.name}"؟`,
-    );
-
-    if (!confirmed) return;
+    setIsDeleting(true);
+    setError("");
 
     try {
-      setError("");
+      await deleteCategory(deletingCategory.id);
 
-      await deleteCategory(category.id);
+      setCategories((prev) =>
+        prev.filter((item) => item.id !== deletingCategory.id),
+      );
 
-      setCategories((prev) => prev.filter((item) => item.id !== category.id));
+      setDeletingCategory(null);
+      setDeleteBlocked(false);
     } catch (err) {
       console.error("Category deletion error:", err);
       setError(err.message || "تعذر حذف التصنيف");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -240,11 +264,25 @@ export default function Categories() {
       )}
 
       {isLoading ? (
-        <div className="flex min-h-64 flex-col items-center justify-center gap-3 rounded-xl border border-[#E9EBF0] bg-white">
-          <LoaderCircle size={28} className="animate-spin text-[#4059E8]" />
+        <>
+          <StatsSkeleton columns={3} />
 
-          <p className="text-sm text-[#777D8A]">جاري تحميل التصنيفات...</p>
-        </div>
+          <CategoryFilters
+            search={search}
+            setSearch={setSearch}
+            status={status}
+            setStatus={setStatus}
+            sort={sort}
+            setSort={setSort}
+            onReset={handleResetFilters}
+          />
+
+          <TableSkeleton
+            columns={6}
+            rows={5}
+            tableClassName="w-full min-w-[850px] text-right"
+          />
+        </>
       ) : (
         <>
           <CategoryStats
@@ -279,6 +317,22 @@ export default function Categories() {
         onClose={handleCloseDrawer}
         onSave={handleSaveCategory}
         isSaving={isSaving}
+      />
+
+      <ConfirmationDialog
+        isOpen={!!deletingCategory}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        title={deleteBlocked ? "لا يمكن حذف التصنيف" : "حذف التصنيف"}
+        description={
+          deleteBlocked
+            ? `لا يمكن حذف "${deletingCategory?.name}" لأنه مرتبط بـ ${getProductCount(deletingCategory?.id)} منتج. احذف المنتجات أو انقلها إلى تصنيف آخر أولاً.`
+            : `هل أنت متأكد من حذف التصنيف "${deletingCategory?.name}"؟ لا يمكن التراجع عن هذا الإجراء بعد الحذف.`
+        }
+        confirmText={deleteBlocked ? "فهمت" : "نعم، احذف التصنيف"}
+        cancelText="إلغاء"
+        showCancel={!deleteBlocked}
+        isLoading={isDeleting}
       />
     </div>
   );

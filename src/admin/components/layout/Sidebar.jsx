@@ -145,7 +145,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           )}
 
           <div className="min-w-0">
-            <h2 className="truncate text-[19px] font-bold leading-tight text-(--admin-primary)">
+            <h2 className="truncate text-[16px] font-bold leading-tight text-[#22252D] sm:text-[17px]">
               {storeInfo.name}
             </h2>
 

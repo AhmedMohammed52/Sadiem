@@ -14,6 +14,10 @@ import ReviewsFilters from "./ReviewsFilters";
 import ReviewsList from "./ReviewsList";
 import ReviewDetailsDrawer from "../../components/ui/drawer/ReviewDetailsDrawer";
 import PageHeader from "../../components/common/PageHeader";
+import StatsSkeleton from "../../components/common/StatsSkeleton";
+import ReviewsSkeleton from "../../components/common/ReviewsSkeleton";
+
+import ConfirmationDialog from "../../components/ui/ConfirmationDialog";
 
 export default function Reviews() {
   const [reviews, setReviews] = useState([]);
@@ -29,6 +33,9 @@ export default function Reviews() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  const [deletingReview, setDeletingReview] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // جلب التقييمات من Supabase
   const fetchReviews = async () => {
@@ -151,28 +158,51 @@ export default function Reviews() {
   };
 
   // حذف تقييم
-  const deleteReview = async (id) => {
-    const confirmed = window.confirm("هل أنت متأكد من حذف هذا التقييم؟");
+  const handleDeleteReview = (reviewOrId) => {
+    const review =
+      typeof reviewOrId === "object"
+        ? reviewOrId
+        : reviews.find((item) => item.id === reviewOrId);
 
-    if (!confirmed) return;
+    if (!review) return;
+
+    setDeletingReview(review);
+  };
+
+  // تنفيذ الحذف بعد التأكيد
+  const handleConfirmDelete = async () => {
+    if (!deletingReview || isDeleting) return;
 
     try {
-      setSaving(true);
+      setIsDeleting(true);
       setError("");
 
-      await removeReview(id);
+      await removeReview(deletingReview.id);
 
-      setReviews((prev) => prev.filter((review) => review.id !== id));
+      setReviews((prev) =>
+        prev.filter((review) => review.id !== deletingReview.id),
+      );
 
-      setDrawerOpen(false);
-      setSelectedReview(null);
+      // إغلاق الدراور لو التقييم المحذوف هو المعروض
+      if (selectedReview?.id === deletingReview.id) {
+        setDrawerOpen(false);
+        setSelectedReview(null);
+      }
+
+      setDeletingReview(null);
     } catch (err) {
       console.error("Delete review error:", err);
       setError(err.message || "حدث خطأ أثناء حذف التقييم.");
-      alert(err.message || "حدث خطأ أثناء حذف التقييم.");
     } finally {
-      setSaving(false);
+      setIsDeleting(false);
     }
+  };
+
+  // إغلاق نافذة التأكيد
+  const handleCancelDelete = () => {
+    if (isDeleting) return;
+
+    setDeletingReview(null);
   };
 
   return (
@@ -192,7 +222,7 @@ export default function Reviews() {
         }
       />
 
-      <ReviewsStats stats={stats} />
+      {loading ? <StatsSkeleton columns={4} /> : <ReviewsStats stats={stats} />}
 
       <ReviewsFilters
         search={search}
@@ -218,16 +248,14 @@ export default function Reviews() {
       )}
 
       {loading ? (
-        <div className="rounded-xl border border-[#E9EBF0] bg-white py-16 text-center text-sm text-[#9298A4]">
-          جاري تحميل التقييمات...
-        </div>
+        <ReviewsSkeleton count={4} />
       ) : (
         <ReviewsList
           reviews={filteredReviews}
           onView={(review) => openDrawer(review, "view")}
           onApprove={(id) => updateReviewStatus(id, "approved")}
           onReject={(id) => updateReviewStatus(id, "rejected")}
-          onDelete={deleteReview}
+          onDelete={handleDeleteReview}
         />
       )}
 
@@ -239,8 +267,23 @@ export default function Reviews() {
         onSave={saveReview}
         onApprove={(id) => updateReviewStatus(id, "approved")}
         onReject={(id) => updateReviewStatus(id, "rejected")}
-        onDelete={deleteReview}
+        onDelete={handleDeleteReview}
         saving={saving}
+      />
+
+      <ConfirmationDialog
+        isOpen={!!deletingReview}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        title="حذف التقييم"
+        description={
+          deletingReview
+            ? `هل أنت متأكد من حذف تقييم "${deletingReview.customerName}"؟ لا يمكن التراجع عن هذا الإجراء بعد الحذف.`
+            : ""
+        }
+        confirmText="نعم، احذف التقييم"
+        cancelText="إلغاء"
+        isLoading={isDeleting}
       />
     </div>
   );

@@ -10,7 +10,7 @@ import {
 import { getOverviewStats } from "../../../services/overviewServices";
 
 import StatCard from "../../components/common/StatCard";
-import StatsGrid from "../../components/common/StatsGrid";
+import StatsSkeleton from "../../components/common/StatsSkeleton";
 
 const STAT_CONFIG = [
   {
@@ -78,6 +78,10 @@ export default function OverviewStats() {
     };
   }, [retryKey]);
 
+  if (loading) {
+    return <StatsSkeleton columns={4} />;
+  }
+
   if (error) {
     return (
       <div className="rounded-xl border border-red-100 bg-red-50 p-4">
@@ -97,16 +101,18 @@ export default function OverviewStats() {
   }
 
   return (
-    <StatsGrid columns={4}>
-      {STAT_CONFIG.map((stat) => (
-        <StatCard
-          key={stat.key}
-          title={stat.title}
-          value={loading ? "..." : (stats?.[stat.key] ?? 0)}
-          icon={stat.icon}
-          color={stat.color}
-        />
-      ))}
-    </StatsGrid>
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+        {STAT_CONFIG.map((stat) => (
+          <StatCard
+            key={stat.key}
+            title={stat.title}
+            value={stats?.[stat.key] ?? 0}
+            icon={stat.icon}
+            color={stat.color}
+          />
+        ))}
+      </div>
+    </div>
   );
 }
