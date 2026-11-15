@@ -33,6 +33,14 @@ const formatDate = (date) =>
     timeStyle: "short",
   });
 
+const getProductImageUrl = (image) => {
+  if (!image) return "";
+
+  if (image.startsWith("http")) return image;
+
+  return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/product-images/${image}`;
+};
+
 export default function OrderDetailsDrawer({
   isOpen,
   order,
@@ -268,11 +276,14 @@ export default function OrderDetailsDrawer({
                   className="flex items-center gap-3 rounded-xl border border-[#E9EBF0] p-3"
                 >
                   <div className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[#F7F8FA]">
-                    {item.image ? (
+                    {getProductImageUrl(item.image) ? (
                       <img
-                        src={item.image}
+                        src={getProductImageUrl(item.image)}
                         alt={item.name}
                         className="h-full w-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
                       />
                     ) : (
                       <Package size={24} className="text-[#C5C9D2]" />
