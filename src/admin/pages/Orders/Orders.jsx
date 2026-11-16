@@ -1,9 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   getOrders,
   updateOrderStatus as saveOrderStatus,
 } from "../../../services/ordersService";
+
+import { getAdminErrorMessage } from "../../utils/errorHandler";
+import { useAdminToast } from "../../../context/AdminToastContext";
+
+import { VALID_ORDER_STATUSES } from "../../data/order";
 
 import OrdersStats from "./OrdersStats";
 import OrdersFilters from "./OrdersFilters";
@@ -14,6 +19,8 @@ import StatsSkeleton from "../../components/common/Skelton/StatsSkeleton";
 import TableSkeleton from "../../components/common/Skelton/TableSkeleton";
 
 export default function Orders() {
+  const { showToast } = useAdminToast();
+
   const [orders, setOrders] = useState([]);
 
   const [search, setSearch] = useState("");
@@ -25,27 +32,45 @@ export default function Orders() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState("");
 
-  // جلب الطلبات
-  const fetchOrders = async () => {
-    try {
-      setIsLoading(true);
-      setError("");
+  // تحميل الطلبات
+  const loadOrders = useCallback(
+    async ({ showLoading = true, notifyError = true } = {}) => {
+      if (showLoading) {
+        setIsLoading(true);
+      }
 
-      const data = await getOrders();
-      setOrders(data);
-    } catch (err) {
-      console.error("Fetch orders error:", err);
-      setError(err.message || "حدث خطأ أثناء تحميل الطلبات.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      try {
+        const data = await getOrders();
+
+        setOrders(data || []);
+
+        return true;
+      } catch (err) {
+        if (notifyError) {
+          showToast({
+            type: "error",
+            title: "تعذر تحميل الطلبات",
+            message: getAdminErrorMessage(
+              err,
+              "حدث خطأ أثناء تحميل الطلبات. حاول مرة أخرى.",
+            ),
+          });
+        }
+
+        return false;
+      } finally {
+        if (showLoading) {
+          setIsLoading(false);
+        }
+      }
+    },
+    [showToast],
+  );
 
   useEffect(() => {
-    fetchOrders();
-  }, []);
+    loadOrders();
+  }, [loadOrders]);
 
   // البحث والفلاتر
   const filteredOrders = useMemo(() => {
@@ -78,35 +103,55 @@ export default function Orders() {
   // إغلاق التفاصيل
   const closeOrderDrawer = () => {
     if (isSaving) return;
+
     setIsDrawerOpen(false);
+    setSelectedOrder(null);
   };
 
-  // حفظ التعديلات في قاعدة البيانات
+  // حفظ حالة الطلب
   const handleStatusChange = async (orderId, newStatus) => {
-    try {
-      setIsSaving(true);
+    if (isSaving) return false;
 
+    if (!VALID_ORDER_STATUSES.includes(newStatus)) {
+      showToast({
+        type: "error",
+        title: "حالة غير صالحة",
+        message: "قيمة الحالة المستلمة غير مدعومة.",
+      });
+
+      return false;
+    }
+
+    setIsSaving(true);
+
+    try {
       const updatedOrder = await saveOrderStatus(orderId, newStatus);
 
-      setOrders((prev) =>
-        prev.map((order) =>
+      setOrders((current) =>
+        current.map((order) =>
           order.id === orderId
             ? { ...order, status: updatedOrder.status }
             : order,
         ),
       );
 
-      setSelectedOrder((prev) =>
-        prev?.id === orderId ? { ...prev, status: updatedOrder.status } : prev,
-      );
-
       setIsDrawerOpen(false);
+      setSelectedOrder(null);
+
+      showToast({
+        type: "success",
+        title: "تم تحديث حالة الطلب",
+        message: "تم حفظ حالة الطلب الجديدة بنجاح.",
+        duration: 2500,
+      });
 
       return true;
-    } catch (err) {
-      console.error("Update order status error:", err);
-
-      alert(err.message || "حدث خطأ أثناء تحديث حالة الطلب.");
+    } catch (error) {
+      showToast({
+        type: "error",
+        title: "تعذر تحديث حالة الطلب",
+        message: getAdminErrorMessage(error, "حدث خطأ أثناء تحديث حالة الطلب."),
+      });
 
       return false;
     } finally {
@@ -120,20 +165,6 @@ export default function Orders() {
         title="الطلبات"
         description="إدارة ومتابعة طلبات العملاء وحالات الشحن."
       />
-
-      {error && (
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-red-100 bg-red-50 p-4">
-          <p className="text-sm text-red-600">{error}</p>
-
-          <button
-            type="button"
-            onClick={fetchOrders}
-            className="shrink-0 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-100"
-          >
-            إعادة المحاولة
-          </button>
-        </div>
-      )}
 
       {isLoading ? (
         <>

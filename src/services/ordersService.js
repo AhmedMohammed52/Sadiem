@@ -1,6 +1,6 @@
 import { supabase } from "../lib/supabase";
 
-// تحويل حالة قاعدة البيانات للشكل المستخدم في الداشبورد
+// Database status -> Dashboard status
 const mapStatus = (status) => {
   const statuses = {
     pending_confirmation: "new",
@@ -12,10 +12,10 @@ const mapStatus = (status) => {
     rejected: "cancelled",
   };
 
-  return statuses[status] || "new";
+  return statuses[status] || status;
 };
 
-// تحويل حالة الداشبورد للشكل المخزن في قاعدة البيانات
+// Dashboard status -> Database status
 const toDatabaseStatus = (status) => {
   const statuses = {
     new: "pending_confirmation",
@@ -28,7 +28,7 @@ const toDatabaseStatus = (status) => {
   return statuses[status] || null;
 };
 
-// تحويل بيانات الطلب للشكل المستخدم في React
+// Map database order to dashboard order
 const mapOrder = (row) => ({
   id: row.id,
   orderNumber: row.order_number,
@@ -69,7 +69,7 @@ const mapOrder = (row) => ({
   })),
 });
 
-// جلب جميع الطلبات
+// GET ORDERS
 export const getOrders = async () => {
   const { data, error } = await supabase
     .from("orders")
@@ -95,7 +95,7 @@ export const getOrders = async () => {
   return (data || []).map(mapOrder);
 };
 
-// إنشاء طلب جديد
+// CREATE ORDER
 export const createOrder = async (orderData, cartItems) => {
   if (!cartItems?.length) {
     throw new Error("لا يمكن إنشاء طلب بدون منتجات.");
@@ -116,10 +116,7 @@ export const createOrder = async (orderData, cartItems) => {
     p_items: itemsPayload,
   });
 
-  if (error) {
-    console.error("Create public order RPC error:", error);
-    throw error;
-  }
+  if (error) throw error;
 
   const order = Array.isArray(data) ? data[0] : data;
 
@@ -130,12 +127,16 @@ export const createOrder = async (orderData, cartItems) => {
   return order;
 };
 
-// تحديث حالة الطلب
+// UPDATE ORDER STATUS
 export const updateOrderStatus = async (orderId, newStatus) => {
+  if (!orderId) {
+    throw new Error("رقم الطلب غير صالح.");
+  }
+
   const databaseStatus = toDatabaseStatus(newStatus);
 
   if (!databaseStatus) {
-    throw new Error(`حالة الطلب غير معروفة: ${newStatus}`);
+    throw new Error("حالة الطلب المحددة غير صحيحة.");
   }
 
   const { data, error } = await supabase
@@ -146,9 +147,18 @@ export const updateOrderStatus = async (orderId, newStatus) => {
     })
     .eq("id", orderId)
     .select("id, status")
-    .single();
+    .maybeSingle();
 
-  if (error) throw error;
+  if (error) {
+    throw error;
+  }
+
+  // No matching row was updated
+  if (!data) {
+    throw new Error(
+      "لم يتم تحديث الطلب. قد يكون الطلب غير موجود أو لا تملك صلاحية تعديله.",
+    );
+  }
 
   return {
     id: data.id,

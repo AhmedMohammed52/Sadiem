@@ -46,6 +46,10 @@ export const ORDER_STATUSES = [
   { value: "cancelled", label: "ملغي" },
 ];
 
+export const VALID_ORDER_STATUSES = ORDER_STATUSES.filter(
+  ({ value }) => value !== "all",
+).map(({ value }) => value);
+
 export const PAYMENT_METHODS = [
   { value: "all", label: "كل طرق الدفع" },
   { value: "cod", label: "الدفع عند الاستلام" },

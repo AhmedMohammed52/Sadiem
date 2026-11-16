@@ -17,7 +17,7 @@ import {
 import BaseDrawer from "../../common/Drawer";
 
 import OrderStatus from "../../../pages/Orders/OrderStatus";
-import { ORDER_STATUSES } from "../../../data/order";
+import { ORDER_STATUSES, VALID_ORDER_STATUSES } from "../../../data/order";
 
 const PAYMENT_METHODS = {
   cod: "الدفع عند الاستلام",
@@ -49,7 +49,6 @@ export default function OrderDetailsDrawer({
   onStatusChange,
   isSaving = false,
 }) {
-  // الحالة الأصلية والحالة المؤقتة
   const [draftStatus, setDraftStatus] = useState("");
 
   // مزامنة الحالة عند فتح طلب جديد أو تحديث بيانات الطلب
@@ -73,6 +72,10 @@ export default function OrderDetailsDrawer({
   // تأكيد وحفظ التعديلات
   const handleSaveChanges = async () => {
     if (!order || !hasChanges || isSaving) return;
+
+    if (!VALID_ORDER_STATUSES.includes(draftStatus)) {
+      return;
+    }
 
     await onStatusChange(order.id, draftStatus);
   };
@@ -155,11 +158,13 @@ export default function OrderDetailsDrawer({
               disabled={isSaving}
               className="h-11 w-full rounded-lg border border-[#E9EBF0] bg-white px-3 text-sm outline-none transition focus:border-[#4059E8] focus:ring-2 focus:ring-[#4059E8]/10 disabled:opacity-60"
             >
-              {Object.entries(ORDER_STATUSES).map(([value, status]) => (
-                <option key={value} value={value}>
-                  {status.label}
-                </option>
-              ))}
+              {ORDER_STATUSES.filter((status) => status.value !== "all").map(
+                (status) => (
+                  <option key={status.value} value={status.value}>
+                    {status.label}
+                  </option>
+                ),
+              )}
             </select>
 
             {hasChanges && (
@@ -179,7 +184,6 @@ export default function OrderDetailsDrawer({
             <div className="space-y-4 rounded-xl border border-[#E9EBF0] p-4">
               <div>
                 <p className="text-xs text-[#9298A4]">اسم العميل</p>
-
                 <p className="mt-1 text-sm font-semibold text-[#333844]">
                   {order.customer?.name || "غير متوفر"}
                 </p>
@@ -187,7 +191,6 @@ export default function OrderDetailsDrawer({
 
               <div>
                 <p className="text-xs text-[#9298A4]">رقم الهاتف</p>
-
                 <p
                   dir="ltr"
                   className="mt-1 text-right text-sm font-medium text-[#555B68]"
@@ -250,7 +253,6 @@ export default function OrderDetailsDrawer({
 
             <div>
               <p className="text-xs text-[#9298A4]">تاريخ الطلب</p>
-
               <p className="mt-1 text-sm font-semibold text-[#555B68]">
                 {formatDate(order.date)}
               </p>
@@ -323,7 +325,6 @@ export default function OrderDetailsDrawer({
             <div className="space-y-3 rounded-xl border border-[#E9EBF0] p-4">
               <div className="flex justify-between gap-3 text-sm">
                 <span className="text-[#777D8A]">إجمالي المنتجات</span>
-
                 <span className="font-medium text-[#444A55]">
                   {formatPrice(order.subtotal)}
                 </span>
@@ -331,7 +332,6 @@ export default function OrderDetailsDrawer({
 
               <div className="flex justify-between gap-3 text-sm">
                 <span className="text-[#777D8A]">الخصم</span>
-
                 <span className="font-medium text-emerald-600">
                   - {formatPrice(order.discount)}
                 </span>
@@ -342,7 +342,6 @@ export default function OrderDetailsDrawer({
                   <Truck size={15} />
                   الشحن
                 </span>
-
                 <span className="font-medium text-[#444A55]">
                   {formatPrice(order.shipping)}
                 </span>
@@ -353,7 +352,6 @@ export default function OrderDetailsDrawer({
                   <span className="text-sm font-bold text-[#22252D]">
                     الإجمالي النهائي
                   </span>
-
                   <span className="text-lg font-bold text-[#D64E78]">
                     {formatPrice(order.total)}
                   </span>
@@ -362,7 +360,6 @@ export default function OrderDetailsDrawer({
 
               <div className="flex items-center justify-between gap-3 rounded-lg bg-[#F7F8FA] p-3">
                 <span className="text-xs text-[#777D8A]">طريقة الدفع</span>
-
                 <span className="text-sm font-semibold text-[#444A55]">
                   {PAYMENT_METHODS[order.paymentMethod] || "غير محدد"}
                 </span>
