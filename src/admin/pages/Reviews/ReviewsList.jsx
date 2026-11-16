@@ -3,6 +3,7 @@ import ReviewCard from "./ReviewCard";
 
 export default function ReviewsList({
   reviews,
+  updatingReviews = {},
   onView,
   onApprove,
   onReject,
@@ -22,16 +23,22 @@ export default function ReviewsList({
         </div>
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          {reviews.map((review) => (
-            <ReviewCard
-              key={review.id}
-              review={review}
-              onView={onView}
-              onApprove={onApprove}
-              onReject={onReject}
-              onDelete={onDelete}
-            />
-          ))}
+          {reviews.map((review) => {
+            const updateAction = updatingReviews[String(review.id)] || null;
+
+            return (
+              <ReviewCard
+                key={review.id}
+                review={review}
+                onView={onView}
+                onApprove={onApprove}
+                onReject={onReject}
+                onDelete={onDelete}
+                isStatusUpdating={Boolean(updateAction)}
+                statusUpdatingAction={updateAction}
+              />
+            );
+          })}
         </div>
       )}
     </div>

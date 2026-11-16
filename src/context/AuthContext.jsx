@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 
 import { supabase } from "../lib/supabase";
 
@@ -9,35 +9,37 @@ export function AuthProvider({ children }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // Prevent outdated verification requests from changing auth state
+  const adminCheckId = useRef(0);
+  const authEventVersion = useRef(0);
+
+  // Verify Admin Permission
   const checkAdmin = async (userId) => {
-    if (!userId) {
-      setIsAdmin(false);
-      return false;
-    }
+    if (!userId) return false;
 
-    const { data, error } = await supabase
-      .from("admin_users")
-      .select("id")
-      .eq("id", userId)
-      .maybeSingle();
+    try {
+      const { data, error } = await supabase
+        .from("admin_users")
+        .select("id")
+        .eq("id", userId)
+        .maybeSingle();
 
-    if (error) {
+      if (error) throw error;
+
+      return Boolean(data);
+    } catch (error) {
       console.error("Admin verification error:", error);
-      setIsAdmin(false);
       return false;
     }
-
-    const authorized = Boolean(data);
-
-    setIsAdmin(authorized);
-
-    return authorized;
   };
 
   useEffect(() => {
     let mounted = true;
 
+    // Initial Authentication
     const initializeAuth = async () => {
+      const initialVersion = authEventVersion.current;
+
       try {
         const {
           data: { session },
@@ -46,70 +48,101 @@ export function AuthProvider({ children }) {
 
         if (error) throw error;
 
-        if (!mounted) return;
+        // Ignore outdated initialization results
+        if (!mounted || authEventVersion.current !== initialVersion) {
+          return;
+        }
 
         const currentUser = session?.user ?? null;
 
         setUser(currentUser);
 
         if (currentUser) {
-          await checkAdmin(currentUser.id);
+          const checkId = ++adminCheckId.current;
+
+          const authorized = await checkAdmin(currentUser.id);
+
+          if (
+            mounted &&
+            checkId === adminCheckId.current &&
+            authEventVersion.current === initialVersion
+          ) {
+            setIsAdmin(authorized);
+          }
         } else {
           setIsAdmin(false);
         }
       } catch (error) {
         console.error("Auth initialization error:", error);
 
-        if (mounted) {
+        if (mounted && authEventVersion.current === initialVersion) {
           setUser(null);
           setIsAdmin(false);
         }
       } finally {
-        if (mounted) {
+        if (mounted && authEventVersion.current === initialVersion) {
           setLoading(false);
         }
       }
     };
 
-    initializeAuth();
-
+    // Listen To Authentication Changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted) return;
 
+      // Initial session is handled by initializeAuth
       if (event === "INITIAL_SESSION") return;
 
       const currentUser = session?.user ?? null;
 
-      setUser(currentUser);
-
-      if (!currentUser) {
-        setIsAdmin(false);
-        setLoading(false);
+      // Token refresh does not require admin re-verification
+      // and must not interrupt the dashboard.
+      if (event === "TOKEN_REFRESHED") {
+        setUser(currentUser);
         return;
       }
 
-      setLoading(true);
+      // A real authentication change occurred
+      authEventVersion.current += 1;
 
-      // Delay the Supabase query until the auth callback completes.
+      setUser(currentUser);
+
+      if (!currentUser) {
+        adminCheckId.current += 1;
+
+        setIsAdmin(false);
+        setLoading(false);
+
+        return;
+      }
+
+      const checkId = ++adminCheckId.current;
+
+      // Run the Supabase query after the auth callback finishes
       setTimeout(async () => {
-        if (!mounted) return;
+        if (!mounted || checkId !== adminCheckId.current) return;
 
-        await checkAdmin(currentUser.id);
+        const authorized = await checkAdmin(currentUser.id);
 
-        if (mounted) {
-          setLoading(false);
-        }
+        if (!mounted || checkId !== adminCheckId.current) return;
+
+        setIsAdmin(authorized);
+        setLoading(false);
       }, 0);
     });
 
+    initializeAuth();
+
     return () => {
       mounted = false;
+      adminCheckId.current += 1;
       subscription.unsubscribe();
     };
   }, []);
 
+  // Login
   const login = async (email, password) => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -128,17 +161,22 @@ export function AuthProvider({ children }) {
 
     setUser(data.user);
     setIsAdmin(true);
+    setLoading(false);
 
     return data.user;
   };
 
+  // Logout
   const logout = async () => {
     const { error } = await supabase.auth.signOut();
 
     if (error) throw error;
 
+    adminCheckId.current += 1;
+
     setUser(null);
     setIsAdmin(false);
+    setLoading(false);
   };
 
   return (

@@ -13,6 +13,7 @@ const PAGE_SIZE = 10;
 export default function CategoriesTable({
   categories = [],
   getProductCount = () => 0,
+  updatingCategories = {},
   onEdit = () => {},
   onDelete = () => {},
   onToggleStatus = () => {},
@@ -62,6 +63,9 @@ export default function CategoriesTable({
               <tbody className="divide-y divide-[#F0F1F5]">
                 {paginatedCategories.map((category) => {
                   const productsCount = getProductCount(category.id);
+                  const isUpdating = Boolean(
+                    updatingCategories[String(category.id)],
+                  );
 
                   return (
                     <tr
@@ -115,7 +119,8 @@ export default function CategoriesTable({
                       <td className="px-5 py-4">
                         <CategoryStatus
                           isActive={category.isActive}
-                          onClick={() => onToggleStatus(category.id)}
+                          isLoading={isUpdating}
+                          onToggle={() => onToggleStatus(category.id)}
                         />
                       </td>
 

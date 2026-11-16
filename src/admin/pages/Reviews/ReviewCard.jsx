@@ -1,4 +1,12 @@
-import { Star, Eye, Check, X, Trash2, CalendarDays } from "lucide-react";
+import {
+  Star,
+  Eye,
+  Check,
+  X,
+  Trash2,
+  CalendarDays,
+  LoaderCircle,
+} from "lucide-react";
 
 const statusConfig = {
   approved: {
@@ -21,15 +29,17 @@ export default function ReviewCard({
   onApprove,
   onReject,
   onDelete,
+  isStatusUpdating = false,
+  statusUpdatingAction = null,
 }) {
-  const status = statusConfig[review.status];
+  const status = statusConfig[review.status] || statusConfig.pending;
 
   return (
     <div className="bg-white border border-gray-100 rounded-2xl p-4 hover:border-pink-200 transition-colors">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-11 h-11 rounded-full bg-pink-50 text-pink-600 flex items-center justify-center font-bold shrink-0">
-            {review.customerName.charAt(0)}
+            {review.customerName?.charAt(0) || "؟"}
           </div>
 
           <div className="min-w-0">
@@ -84,6 +94,7 @@ export default function ReviewCard({
 
         <div className="flex items-center gap-1 shrink-0">
           <button
+            type="button"
             onClick={() => onView(review)}
             title="عرض التفاصيل"
             className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-100 transition"
@@ -93,25 +104,38 @@ export default function ReviewCard({
 
           {review.status !== "approved" && (
             <button
+              type="button"
               onClick={() => onApprove(review.id)}
               title="نشر التقييم"
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-green-600 hover:bg-green-50 transition"
+              disabled={isStatusUpdating}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-green-600 hover:bg-green-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Check size={17} />
+              {statusUpdatingAction === "approved" ? (
+                <LoaderCircle size={16} className="animate-spin" />
+              ) : (
+                <Check size={17} />
+              )}
             </button>
           )}
 
           {review.status !== "rejected" && (
             <button
+              type="button"
               onClick={() => onReject(review.id)}
               title="رفض التقييم"
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-orange-500 hover:bg-orange-50 transition"
+              disabled={isStatusUpdating}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-orange-500 hover:bg-orange-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <X size={17} />
+              {statusUpdatingAction === "rejected" ? (
+                <LoaderCircle size={16} className="animate-spin" />
+              ) : (
+                <X size={17} />
+              )}
             </button>
           )}
 
           <button
+            type="button"
             onClick={() => onDelete(review.id)}
             title="حذف التقييم"
             className="w-8 h-8 rounded-lg flex items-center justify-center text-red-500 hover:bg-red-50 transition"

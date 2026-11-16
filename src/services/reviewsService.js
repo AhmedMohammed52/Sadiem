@@ -118,14 +118,7 @@ export const createReview = async (data) => {
 
   if (privateError) {
     // حذف التقييم إذا فشل حفظ بياناته الخاصة
-    const { error: rollbackError } = await supabase
-      .from("reviews")
-      .delete()
-      .eq("id", review.id);
-
-    if (rollbackError) {
-      console.error("Review rollback error:", rollbackError);
-    }
+    await supabase.from("reviews").delete().eq("id", review.id);
 
     throw privateError;
   }

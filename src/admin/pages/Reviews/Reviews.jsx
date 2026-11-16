@@ -1,5 +1,5 @@
 import { Plus } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   getReviews,
@@ -8,6 +8,9 @@ import {
   updateReviewStatus as saveReviewStatus,
   deleteReview as removeReview,
 } from "../../../services/reviewsService";
+
+import { useAdminToast } from "../../../context/AdminToastContext";
+import { getAdminErrorMessage } from "../../utils/errorHandler";
 
 import ReviewsStats from "./ReviewsStats";
 import ReviewsFilters from "./ReviewsFilters";
@@ -20,6 +23,8 @@ import ReviewsSkeleton from "./ReviewsSkeleton";
 import ConfirmationDialog from "../../components/ui/ConfirmationDialog";
 
 export default function Reviews() {
+  const { showToast } = useAdminToast();
+
   const [reviews, setReviews] = useState([]);
 
   const [search, setSearch] = useState("");
@@ -37,25 +42,33 @@ export default function Reviews() {
   const [deletingReview, setDeletingReview] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const [updatingReviews, setUpdatingReviews] = useState({});
+  const updatingReviewsRef = useRef(new Set());
+
   // جلب التقييمات من Supabase
-  const fetchReviews = async () => {
+  const fetchReviews = useCallback(async ({ showLoading = true } = {}) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
+
       setError("");
 
       const data = await getReviews();
       setReviews(data);
     } catch (err) {
-      console.error("Fetch reviews error:", err);
-      setError(err.message || "حدث خطأ أثناء تحميل التقييمات.");
+      const message = getAdminErrorMessage(
+        err,
+        "حدث خطأ أثناء تحميل التقييمات.",
+      );
+
+      setError(message);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchReviews();
-  }, []);
+  }, [fetchReviews]);
 
   // إحصائيات التقييمات
   const stats = useMemo(() => {
@@ -110,27 +123,56 @@ export default function Reviews() {
 
   // إضافة أو تعديل تقييم
   const saveReview = async (reviewData) => {
+    if (saving) return;
+
     try {
       setSaving(true);
       setError("");
 
+      let savedReview;
+
       if (drawerMode === "edit" && selectedReview) {
-        await updateReview(selectedReview.id, reviewData);
+        savedReview = await updateReview(selectedReview.id, reviewData);
+
+        setReviews((prev) =>
+          prev.map((review) =>
+            review.id === selectedReview.id ? savedReview : review,
+          ),
+        );
+
+        setSelectedReview(savedReview);
+
+        showToast({
+          type: "success",
+          title: "تم تعديل التقييم",
+          message: "تم حفظ التعديلات بنجاح.",
+        });
       } else {
-        await createReview({
+        savedReview = await createReview({
           ...reviewData,
           status: "pending",
         });
-      }
 
-      await fetchReviews();
+        setReviews((prev) => [savedReview, ...prev]);
+
+        showToast({
+          type: "success",
+          title: "تمت إضافة التقييم",
+          message: "تمت إضافة التقييم بنجاح وهو الآن بانتظار المراجعة.",
+        });
+      }
 
       setDrawerOpen(false);
       setSelectedReview(null);
     } catch (err) {
-      console.error("Save review error:", err);
-      setError(err.message || "حدث خطأ أثناء حفظ التقييم.");
-      alert(err.message || "حدث خطأ أثناء حفظ التقييم.");
+      showToast({
+        type: "error",
+        title: "تعذر حفظ التقييم",
+        message: getAdminErrorMessage(
+          err,
+          "حدث خطأ أثناء حفظ التقييم. حاول مرة أخرى.",
+        ),
+      });
     } finally {
       setSaving(false);
     }
@@ -138,22 +180,92 @@ export default function Reviews() {
 
   // نشر أو رفض تقييم
   const updateReviewStatus = async (id, newStatus) => {
-    try {
-      setSaving(true);
-      setError("");
+    const reviewId = String(id);
 
+    if (updatingReviewsRef.current.has(reviewId)) return;
+
+    const currentReview = reviews.find(
+      (review) => String(review.id) === reviewId,
+    );
+
+    if (!currentReview || currentReview.status === newStatus) return;
+
+    const previousStatus = currentReview.status;
+
+    updatingReviewsRef.current.add(reviewId);
+
+    setUpdatingReviews((prev) => ({
+      ...prev,
+      [reviewId]: newStatus,
+    }));
+
+    setError("");
+
+    // تحديث الحالة مباشرة في الواجهة
+    setReviews((prev) =>
+      prev.map((review) =>
+        String(review.id) === reviewId
+          ? { ...review, status: newStatus }
+          : review,
+      ),
+    );
+
+    setSelectedReview((prev) =>
+      prev && String(prev.id) === reviewId
+        ? { ...prev, status: newStatus }
+        : prev,
+    );
+
+    try {
       await saveReviewStatus(id, newStatus);
 
-      await fetchReviews();
-
-      setDrawerOpen(false);
-      setSelectedReview(null);
+      showToast({
+        type: "success",
+        title:
+          newStatus === "approved"
+            ? "تم نشر التقييم"
+            : newStatus === "rejected"
+              ? "تم رفض التقييم"
+              : "تم تحديث التقييم",
+        message:
+          newStatus === "approved"
+            ? "التقييم أصبح منشورًا في المتجر."
+            : newStatus === "rejected"
+              ? "تم رفض التقييم بنجاح."
+              : "تم تحديث حالة التقييم بنجاح.",
+      });
     } catch (err) {
-      console.error("Update review status error:", err);
-      setError(err.message || "حدث خطأ أثناء تحديث حالة التقييم.");
-      alert(err.message || "حدث خطأ أثناء تحديث حالة التقييم.");
+      // إرجاع الحالة القديمة في حالة فشل التحديث
+      setReviews((prev) =>
+        prev.map((review) =>
+          String(review.id) === reviewId
+            ? { ...review, status: previousStatus }
+            : review,
+        ),
+      );
+
+      setSelectedReview((prev) =>
+        prev && String(prev.id) === reviewId
+          ? { ...prev, status: previousStatus }
+          : prev,
+      );
+
+      showToast({
+        type: "error",
+        title: "تعذر تحديث حالة التقييم",
+        message: getAdminErrorMessage(
+          err,
+          "حدث خطأ أثناء تحديث حالة التقييم. حاول مرة أخرى.",
+        ),
+      });
     } finally {
-      setSaving(false);
+      updatingReviewsRef.current.delete(reviewId);
+
+      setUpdatingReviews((prev) => {
+        const updated = { ...prev };
+        delete updated[reviewId];
+        return updated;
+      });
     }
   };
 
@@ -175,7 +287,6 @@ export default function Reviews() {
 
     try {
       setIsDeleting(true);
-      setError("");
 
       await removeReview(deletingReview.id);
 
@@ -190,9 +301,21 @@ export default function Reviews() {
       }
 
       setDeletingReview(null);
+
+      showToast({
+        type: "success",
+        title: "تم حذف التقييم",
+        message: "تم حذف التقييم بنجاح.",
+      });
     } catch (err) {
-      console.error("Delete review error:", err);
-      setError(err.message || "حدث خطأ أثناء حذف التقييم.");
+      showToast({
+        type: "error",
+        title: "تعذر حذف التقييم",
+        message: getAdminErrorMessage(
+          err,
+          "حدث خطأ أثناء حذف التقييم. حاول مرة أخرى.",
+        ),
+      });
     } finally {
       setIsDeleting(false);
     }
@@ -239,7 +362,7 @@ export default function Reviews() {
 
           <button
             type="button"
-            onClick={fetchReviews}
+            onClick={() => fetchReviews()}
             className="shrink-0 font-semibold underline"
           >
             إعادة المحاولة
@@ -252,6 +375,7 @@ export default function Reviews() {
       ) : (
         <ReviewsList
           reviews={filteredReviews}
+          updatingReviews={updatingReviews}
           onView={(review) => openDrawer(review, "view")}
           onApprove={(id) => updateReviewStatus(id, "approved")}
           onReject={(id) => updateReviewStatus(id, "rejected")}

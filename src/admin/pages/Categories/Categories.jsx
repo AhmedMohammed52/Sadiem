@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Plus, AlertCircle } from "lucide-react";
 
 import CategoryStats from "./CategoryStats";
@@ -17,9 +17,14 @@ import {
   deleteCategory,
 } from "../../../services/categoriesService";
 
+import { useAdminToast } from "../../../context/AdminToastContext";
+import { getAdminErrorMessage } from "../../utils/errorHandler";
+
 import ConfirmationDialog from "../../components/ui/ConfirmationDialog";
 
 export default function Categories() {
+  const { showToast } = useAdminToast();
+
   const [categories, setCategories] = useState([]);
 
   const [search, setSearch] = useState("");
@@ -37,21 +42,35 @@ export default function Categories() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteBlocked, setDeleteBlocked] = useState(false);
 
-  // تحميل التصنيفات وأعداد المنتجات
-  const loadCategories = useCallback(async () => {
-    setIsLoading(true);
-    setError("");
+  const [updatingCategories, setUpdatingCategories] = useState({});
+  const updatingCategoriesRef = useRef(new Set());
 
-    try {
-      const data = await getCategories();
-      setCategories(data);
-    } catch (err) {
-      console.error("Categories loading error:", err);
-      setError(err.message || "تعذر تحميل التصنيفات");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  // تحميل التصنيفات وأعداد المنتجات
+  const loadCategories = useCallback(
+    async ({ showLoading = true } = {}) => {
+      try {
+        if (showLoading) setIsLoading(true);
+
+        setError("");
+
+        const data = await getCategories();
+        setCategories(data);
+      } catch (err) {
+        const message = getAdminErrorMessage(err, "تعذر تحميل التصنيفات.");
+
+        setError(message);
+
+        showToast({
+          type: "error",
+          title: "تعذر تحميل التصنيفات",
+          message,
+        });
+      } finally {
+        if (showLoading) setIsLoading(false);
+      }
+    },
+    [showToast],
+  );
 
   useEffect(() => {
     loadCategories();
@@ -144,22 +163,34 @@ export default function Categories() {
     setIsSaving(true);
     setError("");
 
+    const isEditing = Boolean(editingCategory);
+
     try {
       await saveCategory(categoryData, editingCategory?.id || null);
 
-      await loadCategories();
+      await loadCategories({ showLoading: false });
 
       setIsDrawerOpen(false);
       setEditingCategory(null);
-    } catch (err) {
-      console.error("Category saving error:", err);
 
+      showToast({
+        type: "success",
+        title: isEditing ? "تم تعديل التصنيف" : "تمت إضافة التصنيف",
+        message: isEditing
+          ? "تم حفظ تعديلات التصنيف بنجاح."
+          : "تمت إضافة التصنيف بنجاح.",
+      });
+    } catch (err) {
       const message =
         err.code === "23505"
           ? "اسم التصنيف أو الرابط مستخدم بالفعل."
-          : err.message || "حدث خطأ أثناء حفظ التصنيف";
+          : getAdminErrorMessage(err, "حدث خطأ أثناء حفظ التصنيف.");
 
-      setError(message);
+      showToast({
+        type: "error",
+        title: "تعذر حفظ التصنيف",
+        message,
+      });
     } finally {
       setIsSaving(false);
     }
@@ -167,23 +198,66 @@ export default function Categories() {
 
   // تغيير حالة التصنيف
   const handleToggleStatus = async (categoryId) => {
-    const category = categories.find((item) => item.id === categoryId);
+    const categoryKey = String(categoryId);
+
+    if (updatingCategoriesRef.current.has(categoryKey)) return;
+
+    const category = categories.find((item) => String(item.id) === categoryKey);
 
     if (!category) return;
 
+    const previousStatus = category.isActive;
+    const newStatus = !previousStatus;
+
+    updatingCategoriesRef.current.add(categoryKey);
+
+    setUpdatingCategories((prev) => ({
+      ...prev,
+      [categoryKey]: true,
+    }));
+
+    // تحديث الحالة مباشرة في الواجهة
+    setCategories((prev) =>
+      prev.map((item) =>
+        String(item.id) === categoryKey
+          ? { ...item, isActive: newStatus }
+          : item,
+      ),
+    );
+
     try {
-      setError("");
+      await updateCategoryStatus(categoryId, newStatus);
 
-      await updateCategoryStatus(categoryId, !category.isActive);
-
+      showToast({
+        type: "success",
+        title: "تم تحديث حالة التصنيف",
+        message: newStatus
+          ? "التصنيف أصبح نشطًا ومتاحًا في المتجر."
+          : "تم إيقاف التصنيف وإخفاؤه من المتجر.",
+      });
+    } catch (err) {
+      // إرجاع الحالة القديمة في حالة فشل التحديث
       setCategories((prev) =>
         prev.map((item) =>
-          item.id === categoryId ? { ...item, isActive: !item.isActive } : item,
+          String(item.id) === categoryKey
+            ? { ...item, isActive: previousStatus }
+            : item,
         ),
       );
-    } catch (err) {
-      console.error("Category status error:", err);
-      setError(err.message || "تعذر تغيير حالة التصنيف");
+
+      showToast({
+        type: "error",
+        title: "تعذر تغيير حالة التصنيف",
+        message: getAdminErrorMessage(err, "حدث خطأ أثناء تغيير حالة التصنيف."),
+      });
+    } finally {
+      updatingCategoriesRef.current.delete(categoryKey);
+
+      setUpdatingCategories((prev) => {
+        const updated = { ...prev };
+        delete updated[categoryKey];
+        return updated;
+      });
     }
   };
 
@@ -213,7 +287,6 @@ export default function Categories() {
     }
 
     setIsDeleting(true);
-    setError("");
 
     try {
       await deleteCategory(deletingCategory.id);
@@ -224,9 +297,18 @@ export default function Categories() {
 
       setDeletingCategory(null);
       setDeleteBlocked(false);
+
+      showToast({
+        type: "success",
+        title: "تم حذف التصنيف",
+        message: "تم حذف التصنيف بنجاح.",
+      });
     } catch (err) {
-      console.error("Category deletion error:", err);
-      setError(err.message || "تعذر حذف التصنيف");
+      showToast({
+        type: "error",
+        title: "تعذر حذف التصنيف",
+        message: getAdminErrorMessage(err, "حدث خطأ أثناء حذف التصنيف."),
+      });
     } finally {
       setIsDeleting(false);
     }
@@ -303,6 +385,7 @@ export default function Categories() {
           <CategoriesTable
             categories={filteredCategories}
             getProductCount={getProductCount}
+            updatingCategories={updatingCategories}
             onEdit={handleEditCategory}
             onDelete={handleDeleteCategory}
             onToggleStatus={handleToggleStatus}

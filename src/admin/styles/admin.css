@@ -225,3 +225,15 @@
     transform: scale(1) translateY(0);
   }
 }
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-15px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}

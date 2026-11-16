@@ -134,7 +134,7 @@ export const saveCategory = async (categoryData, categoryId = null) => {
 
     if (error) {
       if (uploadedImagePath) {
-        await removeCategoryImage(uploadedImagePath).catch(console.error);
+        await removeCategoryImage(uploadedImagePath).catch(() => {});
       }
 
       throw error;
@@ -170,7 +170,7 @@ export const saveCategory = async (categoryData, categoryId = null) => {
       }
     } catch (error) {
       if (uploadedImagePath) {
-        await removeCategoryImage(uploadedImagePath).catch(console.error);
+        await removeCategoryImage(uploadedImagePath).catch(() => {});
       }
 
       await supabase.from("categories").delete().eq("id", savedCategoryId);

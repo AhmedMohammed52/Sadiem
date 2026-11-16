@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+
 import { Star, Pencil, Trash2, Package, Copy } from "lucide-react";
 
 import { ProductStatus, StockStatus } from "./ProductStatus";
@@ -8,6 +9,10 @@ import TableFooter from "../../components/tables/TableFooter";
 import TableEmptyState from "../../components/tables/TableEmptyState";
 
 const PAGE_SIZE = 10;
+
+// =========================
+// PRODUCT IMAGE
+// =========================
 
 function ProductImage({ src, name }) {
   return (
@@ -21,8 +26,13 @@ function ProductImage({ src, name }) {
   );
 }
 
+// =========================
+// PRODUCTS TABLE
+// =========================
+
 export default function ProductsTable({
   products = [],
+  updatingProducts = {},
   onToggleFeatured,
   onToggleStock,
   onTogglePublished,
@@ -34,13 +44,11 @@ export default function ProductsTable({
 
   const totalPages = Math.ceil(products.length / PAGE_SIZE);
 
+  // Keep current page when product data changes.
+  // Only correct it when the current page no longer exists.
   useEffect(() => {
-    setCurrentPage(1);
-  }, [products]);
-
-  useEffect(() => {
-    if (totalPages > 0 && currentPage > totalPages) {
-      setCurrentPage(totalPages);
+    if (currentPage > Math.max(totalPages, 1)) {
+      setCurrentPage(Math.max(totalPages, 1));
     }
   }, [currentPage, totalPages]);
 
@@ -75,131 +83,198 @@ export default function ProductsTable({
               />
 
               <tbody className="divide-y divide-[#F0F1F5]">
-                {paginatedProducts.map((product) => (
-                  <tr
-                    key={product.id}
-                    className="transition-colors hover:bg-[#FAFAFC]"
-                  >
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-3">
-                        <ProductImage src={product.image} name={product.name} />
+                {paginatedProducts.map((product) => {
+                  // Independent loading state for each operation
+                  const isStockUpdating = Boolean(
+                    updatingProducts[`${product.id}:stock`],
+                  );
 
-                        <div className="min-w-0">
-                          <p className="max-w-52 truncate text-xs font-semibold text-[#22252D]">
-                            {product.name}
-                          </p>
+                  const isPublishedUpdating = Boolean(
+                    updatingProducts[`${product.id}:published`],
+                  );
 
-                          <p className="mt-1 text-[10px] text-[#A0A5B1]">
-                            {product.sku}
-                          </p>
+                  const isFeaturedUpdating = Boolean(
+                    updatingProducts[`${product.id}:featured`],
+                  );
+
+                  return (
+                    <tr
+                      key={product.id}
+                      className="transition-colors hover:bg-[#FAFAFC]"
+                    >
+                      {/* PRODUCT */}
+
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          <ProductImage
+                            src={product.image}
+                            name={product.name}
+                          />
+
+                          <div className="min-w-0">
+                            <p className="max-w-52 truncate text-xs font-semibold text-[#22252D]">
+                              {product.name}
+                            </p>
+
+                            <p className="mt-1 text-[10px] text-[#A0A5B1]">
+                              {product.sku}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    <td className="px-4 py-4 text-xs text-[#777D8A]">
-                      {product.categoryName || "غير محدد"}
-                    </td>
+                      {/* CATEGORY */}
 
-                    <td className="px-4 py-4">
-                      <p className="text-xs font-semibold text-[#22252D]">
-                        {product.price.toLocaleString("en-US")} ج.م
-                      </p>
+                      <td className="px-4 py-4 text-xs text-[#777D8A]">
+                        {product.categoryName || "غير محدد"}
+                      </td>
 
-                      {product.oldPrice && (
-                        <p className="mt-1 text-[10px] text-[#A0A5B1] line-through">
-                          {product.oldPrice.toLocaleString("en-US")} ج.م
+                      {/* PRICE */}
+
+                      <td className="px-4 py-4">
+                        <p className="text-xs font-semibold text-[#22252D]">
+                          {product.price.toLocaleString("en-US")} ج.م
                         </p>
-                      )}
-                    </td>
 
-                    <td className="px-4 py-4 text-xs font-semibold text-[#22252D]">
-                      {product.stock}
-                    </td>
+                        {product.oldPrice && (
+                          <p className="mt-1 text-[10px] text-[#A0A5B1] line-through">
+                            {product.oldPrice.toLocaleString("en-US")} ج.م
+                          </p>
+                        )}
+                      </td>
 
-                    <td className="px-4 py-4">
-                      <button
-                        type="button"
-                        onClick={() => onToggleStock(product)}
-                        className="cursor-pointer"
-                        title="تغيير حالة التوفر"
-                        aria-label={`تغيير توفر ${product.name}`}
-                      >
-                        <StockStatus stock={product.stock} />
-                      </button>
-                    </td>
+                      {/* STOCK */}
 
-                    <td className="px-4 py-4">
-                      <button
-                        type="button"
-                        onClick={() => onTogglePublished(product)}
-                        className="cursor-pointer"
-                        title="تغيير حالة النشر"
-                        aria-label={`تغيير حالة نشر ${product.name}`}
-                      >
-                        <ProductStatus isPublished={product.isPublished} />
-                      </button>
-                    </td>
+                      <td className="px-4 py-4 text-xs font-semibold text-[#22252D]">
+                        {product.stock}
+                      </td>
 
-                    <td className="px-4 py-4">
-                      <button
-                        type="button"
-                        onClick={() => onToggleFeatured(product)}
-                        className={`flex h-9 w-9 items-center justify-center rounded-lg transition ${
-                          product.isFeatured
-                            ? "bg-amber-50 text-amber-500"
-                            : "bg-gray-50 text-gray-300 hover:bg-amber-50 hover:text-amber-500"
-                        }`}
-                        title="تغيير حالة المنتج المميز"
-                        aria-label={`تغيير تمييز ${product.name}`}
-                      >
-                        <Star
-                          size={17}
-                          fill={product.isFeatured ? "currentColor" : "none"}
-                        />
-                      </button>
-                    </td>
+                      {/* AVAILABILITY */}
 
-                    <td className="px-5 py-4">
-                      <div className="flex items-center justify-center gap-2">
-                        {/* تعديل */}
+                      <td className="px-4 py-4">
                         <button
                           type="button"
-                          onClick={() => onEdit(product)}
-                          title="تعديل المنتج"
-                          aria-label={`تعديل ${product.name}`}
-                          className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-500 transition hover:bg-blue-100"
+                          disabled={isStockUpdating}
+                          onClick={() => onToggleStock(product)}
+                          className={`
+                            inline-flex items-center rounded-md
+                            transition-all duration-200
+                            ${
+                              isStockUpdating
+                                ? "cursor-wait opacity-50"
+                                : "hover:opacity-80"
+                            }
+                          `}
+                          title="تغيير حالة التوفر"
+                          aria-label={`تغيير توفر ${product.name}`}
+                          aria-busy={isStockUpdating}
                         >
-                          <Pencil size={15} />
+                          <StockStatus stock={product.stock} />
                         </button>
+                      </td>
 
-                        {/* نسخ */}
+                      {/* PUBLISH STATUS */}
+
+                      <td className="px-4 py-4">
                         <button
                           type="button"
-                          onClick={() => onDuplicate(product)}
-                          title="نسخ المنتج"
-                          aria-label={`نسخ ${product.name}`}
-                          className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-50 text-violet-500 transition hover:bg-violet-100"
+                          disabled={isPublishedUpdating}
+                          onClick={() => onTogglePublished(product)}
+                          className={`
+                            inline-flex items-center rounded-md
+                            transition-all duration-200
+                            ${
+                              isPublishedUpdating
+                                ? "cursor-wait opacity-50"
+                                : "hover:opacity-80"
+                            }
+                          `}
+                          title="تغيير حالة النشر"
+                          aria-label={`تغيير حالة نشر ${product.name}`}
+                          aria-busy={isPublishedUpdating}
                         >
-                          <Copy size={15} />
+                          <ProductStatus isPublished={product.isPublished} />
                         </button>
+                      </td>
 
-                        {/* حذف */}
+                      {/* FEATURED */}
+
+                      <td className="px-4 py-4">
                         <button
                           type="button"
-                          onClick={() => onDelete(product)}
-                          className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 text-red-500 transition hover:bg-red-100"
-                          title="حذف المنتج"
-                          aria-label={`حذف ${product.name}`}
+                          disabled={isFeaturedUpdating}
+                          onClick={() => onToggleFeatured(product)}
+                          className={`
+                            flex h-9 w-9 items-center justify-center
+                            rounded-lg transition-all duration-200
+                            disabled:cursor-wait
+                            ${
+                              product.isFeatured
+                                ? "bg-amber-50 text-amber-500"
+                                : "bg-gray-50 text-gray-300 hover:bg-amber-50 hover:text-amber-500"
+                            }
+                            ${isFeaturedUpdating ? "scale-95 opacity-50" : ""}
+                          `}
+                          title="تغيير حالة المنتج المميز"
+                          aria-label={`تغيير تمييز ${product.name}`}
+                          aria-busy={isFeaturedUpdating}
                         >
-                          <Trash2 size={15} />
+                          <Star
+                            size={17}
+                            fill={product.isFeatured ? "currentColor" : "none"}
+                          />
                         </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+
+                      {/* ACTIONS */}
+
+                      <td className="px-5 py-4">
+                        <div className="flex items-center justify-center gap-2">
+                          {/* EDIT */}
+
+                          <button
+                            type="button"
+                            onClick={() => onEdit(product)}
+                            title="تعديل المنتج"
+                            aria-label={`تعديل ${product.name}`}
+                            className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-500 transition hover:bg-blue-100"
+                          >
+                            <Pencil size={15} />
+                          </button>
+
+                          {/* DUPLICATE */}
+
+                          <button
+                            type="button"
+                            onClick={() => onDuplicate(product)}
+                            title="نسخ المنتج"
+                            aria-label={`نسخ ${product.name}`}
+                            className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-50 text-violet-500 transition hover:bg-violet-100"
+                          >
+                            <Copy size={15} />
+                          </button>
+
+                          {/* DELETE */}
+
+                          <button
+                            type="button"
+                            onClick={() => onDelete(product)}
+                            title="حذف المنتج"
+                            aria-label={`حذف ${product.name}`}
+                            className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 text-red-500 transition hover:bg-red-100"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
+
+          {/* PAGINATION */}
 
           <TableFooter
             totalItems={products.length}

@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Plus, AlertCircle } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Plus } from "lucide-react";
 
 import ProductStats from "./ProductStats";
 import ProductFilters from "./ProductFilters";
@@ -13,13 +13,20 @@ import TableSkeleton from "../../components/common/Skelton/TableSkeleton";
 import {
   getProducts,
   saveProduct,
+  updateProductFields,
   deleteProduct,
 } from "../../../services/productsService";
 
+import { getAdminErrorMessage } from "../../utils/errorHandler";
+
 import ConfirmationDialog from "../../components/ui/ConfirmationDialog";
+import { useAdminToast } from "../../../context/AdminToastContext";
 
 export default function Products() {
+  const { showToast } = useAdminToast();
+
   const [products, setProducts] = useState([]);
+
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [status, setStatus] = useState("all");
@@ -27,39 +34,63 @@ export default function Products() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [isDuplicating, setIsDuplicating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState("");
+
+  const [updatingProducts, setUpdatingProducts] = useState({});
+
+  const updatingProductsRef = useRef(new Set());
 
   const [deletingProduct, setDeletingProduct] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const loadProducts = useCallback(async () => {
-    setIsLoading(true);
-    setError("");
+  // LOAD PRODUCTS
+  const loadProducts = useCallback(
+    async ({ showLoading = true, notifyError = true } = {}) => {
+      if (showLoading) {
+        setIsLoading(true);
+      }
 
-    try {
-      const data = await getProducts();
-      setProducts(data);
-    } catch (err) {
-      console.error("Products loading error:", err);
-      setError(err.message || "تعذر تحميل المنتجات");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+      try {
+        const data = await getProducts();
+
+        setProducts(data || []);
+
+        return true;
+      } catch (err) {
+        if (notifyError) {
+          showToast({
+            type: "error",
+            title: "تعذر تحميل المنتجات",
+            message: getAdminErrorMessage(
+              err,
+              "حدث خطأ أثناء تحميل المنتجات. حاول تحديث الصفحة مرة أخرى.",
+            ),
+          });
+        }
+
+        return false;
+      } finally {
+        if (showLoading) {
+          setIsLoading(false);
+        }
+      }
+    },
+    [showToast],
+  );
 
   useEffect(() => {
     loadProducts();
   }, [loadProducts]);
 
+  // FILTER PRODUCTS
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
       const searchValue = search.trim().toLowerCase();
 
       const matchesSearch =
-        product.name.toLowerCase().includes(searchValue) ||
+        (product.name || "").toLowerCase().includes(searchValue) ||
         (product.sku || "").toLowerCase().includes(searchValue);
 
       const matchesCategory =
@@ -69,14 +100,19 @@ export default function Products() {
         switch (status) {
           case "published":
             return product.isPublished;
+
           case "draft":
             return !product.isPublished;
+
           case "available":
             return product.stock > 0;
+
           case "unavailable":
             return product.stock === 0;
+
           case "low":
             return product.stock > 0 && product.stock <= 5;
+
           default:
             return true;
         }
@@ -86,23 +122,22 @@ export default function Products() {
     });
   }, [products, search, category, status]);
 
+  // ADD PRODUCT
   const handleAddProduct = () => {
-    setError("");
     setEditingProduct(null);
     setIsDuplicating(false);
     setIsDrawerOpen(true);
   };
 
+  // EDIT PRODUCT
   const handleEditProduct = (product) => {
-    setError("");
     setEditingProduct(product);
     setIsDuplicating(false);
     setIsDrawerOpen(true);
   };
 
+  // DUPLICATE PRODUCT
   const handleDuplicateProduct = (product) => {
-    setError("");
-
     const duplicatedProduct = {
       ...product,
       id: null,
@@ -124,6 +159,7 @@ export default function Products() {
     setIsDrawerOpen(true);
   };
 
+  // CLOSE DRAWER
   const handleCloseDrawer = () => {
     if (isSaving) return;
 
@@ -132,11 +168,13 @@ export default function Products() {
     setIsDuplicating(false);
   };
 
+  // SAVE PRODUCT
   const handleSaveProduct = async (productData) => {
     if (isSaving) return;
 
     setIsSaving(true);
-    setError("");
+
+    const isEditing = Boolean(editingProduct?.id);
 
     try {
       await saveProduct(
@@ -147,56 +185,146 @@ export default function Products() {
         editingProduct?.id || null,
       );
 
-      await loadProducts();
-
       setIsDrawerOpen(false);
       setEditingProduct(null);
       setIsDuplicating(false);
+
+      showToast({
+        type: "success",
+        title: isEditing ? "تم تحديث المنتج" : "تمت إضافة المنتج",
+        message: isEditing
+          ? "تم حفظ تعديلات المنتج بنجاح."
+          : "تمت إضافة المنتج إلى المتجر بنجاح.",
+      });
+
+      // Refresh without showing the page skeleton
+      const refreshed = await loadProducts({
+        showLoading: false,
+        notifyError: false,
+      });
+
+      if (!refreshed) {
+        showToast({
+          type: "warning",
+          title: "تعذر تحديث القائمة",
+          message:
+            "تم حفظ المنتج بنجاح، لكن تعذر تحديث قائمة المنتجات. حاول إعادة تحميل الصفحة.",
+        });
+      }
     } catch (err) {
-      console.error("Product saving error:", err);
-      setError(err.message || "حدث خطأ أثناء حفظ المنتج");
+      showToast({
+        type: "error",
+        title: "تعذر حفظ المنتج",
+        message: getAdminErrorMessage(
+          err,
+          "حدث خطأ أثناء حفظ المنتج. يرجى مراجعة البيانات والمحاولة مرة أخرى.",
+        ),
+      });
     } finally {
       setIsSaving(false);
     }
   };
 
-  const updateProduct = async (product, changes) => {
-    try {
-      setError("");
+  // OPTIMISTIC PRODUCT UPDATE
+  const updateProduct = async (product, changes, field) => {
+    const productId = product.id;
+    const updateKey = `${productId}:${field}`;
 
-      await saveProduct(
-        {
-          ...product,
-          ...changes,
-        },
-        product.id,
+    // Prevent duplicate requests for the same field
+    if (updatingProductsRef.current.has(updateKey)) return;
+
+    // Save previous values of changed fields
+    const previousValues = Object.fromEntries(
+      Object.keys(changes).map((key) => [key, product[key]]),
+    );
+
+    // Lock this operation
+    updatingProductsRef.current.add(updateKey);
+
+    setUpdatingProducts((current) => ({
+      ...current,
+      [updateKey]: true,
+    }));
+
+    // Update UI immediately
+    setProducts((current) =>
+      current.map((item) =>
+        item.id === productId ? { ...item, ...changes } : item,
+      ),
+    );
+
+    try {
+      await updateProductFields(productId, changes);
+
+      showToast({
+        type: "success",
+        title: "تم تحديث المنتج",
+        message: "تم حفظ التغييرات بنجاح.",
+        duration: 2500,
+      });
+    } catch (err) {
+      // Rollback only the failed fields
+      setProducts((current) =>
+        current.map((item) =>
+          item.id === productId ? { ...item, ...previousValues } : item,
+        ),
       );
 
-      await loadProducts();
-    } catch (err) {
-      console.error("Product update error:", err);
-      setError(err.message || "تعذر تحديث المنتج");
+      showToast({
+        type: "error",
+        title: "تعذر تحديث المنتج",
+        message: getAdminErrorMessage(
+          err,
+          `تعذر تحديث "${product.name}". تمت استعادة القيمة السابقة.`,
+        ),
+      });
+    } finally {
+      updatingProductsRef.current.delete(updateKey);
+
+      setUpdatingProducts((current) => {
+        const updated = { ...current };
+
+        delete updated[updateKey];
+
+        return updated;
+      });
     }
   };
 
+  // TOGGLE FEATURED
   const handleToggleFeatured = (product) => {
-    updateProduct(product, {
-      isFeatured: !product.isFeatured,
-    });
+    updateProduct(
+      product,
+      {
+        isFeatured: !product.isFeatured,
+      },
+      "featured",
+    );
   };
 
+  // TOGGLE STOCK
   const handleToggleStock = (product) => {
-    updateProduct(product, {
-      stock: product.stock > 0 ? 0 : 1,
-    });
+    updateProduct(
+      product,
+      {
+        stock: product.stock > 0 ? 0 : 1,
+      },
+      "stock",
+    );
   };
 
+  // TOGGLE PUBLISHED
   const handleTogglePublished = (product) => {
-    updateProduct(product, {
-      isPublished: !product.isPublished,
-    });
+    updateProduct(
+      product,
+      {
+        isPublished: !product.isPublished,
+      },
+      "published",
+    );
   };
 
+  // DELETE PRODUCT
   const handleDelete = (product) => {
     setDeletingProduct(product);
   };
@@ -211,19 +339,31 @@ export default function Products() {
     if (!deletingProduct || isDeleting) return;
 
     setIsDeleting(true);
-    setError("");
 
     try {
-      await deleteProduct(deletingProduct.id);
+      const productId = deletingProduct.id;
+      const productName = deletingProduct.name;
 
-      setProducts((current) =>
-        current.filter((item) => item.id !== deletingProduct.id),
-      );
+      await deleteProduct(productId);
+
+      setProducts((current) => current.filter((item) => item.id !== productId));
 
       setDeletingProduct(null);
+
+      showToast({
+        type: "success",
+        title: "تم حذف المنتج",
+        message: `تم حذف "${productName}" بنجاح.`,
+      });
     } catch (err) {
-      console.error("Product deletion error:", err);
-      setError(err.message || "تعذر حذف المنتج");
+      showToast({
+        type: "error",
+        title: "تعذر حذف المنتج",
+        message: getAdminErrorMessage(
+          err,
+          "تعذر حذف المنتج. يرجى المحاولة مرة أخرى.",
+        ),
+      });
     } finally {
       setIsDeleting(false);
     }
@@ -246,15 +386,7 @@ export default function Products() {
         }
       />
 
-      {error && (
-        <div
-          className="flex items-start gap-2 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600"
-          dir="rtl"
-        >
-          <AlertCircle size={17} className="mt-0.5 shrink-0" />
-          <p className="wrap-break-word">{error}</p>
-        </div>
-      )}
+      {/* PRODUCTS CONTENT */}
 
       {isLoading ? (
         <>
@@ -290,6 +422,7 @@ export default function Products() {
 
           <ProductsTable
             products={filteredProducts}
+            updatingProducts={updatingProducts}
             onToggleFeatured={handleToggleFeatured}
             onToggleStock={handleToggleStock}
             onTogglePublished={handleTogglePublished}
@@ -300,6 +433,8 @@ export default function Products() {
         </>
       )}
 
+      {/* PRODUCT DRAWER */}
+
       <ProductDrawer
         isOpen={isDrawerOpen}
         product={editingProduct}
@@ -307,6 +442,8 @@ export default function Products() {
         onSave={handleSaveProduct}
         isSaving={isSaving}
       />
+
+      {/* DELETE CONFIRMATION */}
 
       <ConfirmationDialog
         isOpen={!!deletingProduct}

@@ -687,3 +687,40 @@ export const deleteProduct = async (productId) => {
 
   await removeStorageImages(paths);
 };
+
+export const updateProductFields = async (productId, changes) => {
+  const payload = {};
+
+  if (Object.prototype.hasOwnProperty.call(changes, "stock")) {
+    payload.stock = changes.stock;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(changes, "isPublished")) {
+    payload.status = changes.isPublished ? "active" : "draft";
+  }
+
+  if (Object.prototype.hasOwnProperty.call(changes, "isFeatured")) {
+    payload.is_featured = changes.isFeatured;
+  }
+
+  if (Object.keys(payload).length === 0) {
+    throw new Error("لا توجد بيانات صالحة للتحديث.");
+  }
+
+  payload.updated_at = new Date().toISOString();
+
+  const { data, error } = await supabase
+    .from("products")
+    .update(payload)
+    .eq("id", productId)
+    .select("id")
+    .maybeSingle();
+
+  if (error) throw error;
+
+  if (!data) {
+    throw new Error("لم يتم العثور على المنتج أو لا تملك صلاحية تحديثه.");
+  }
+
+  return data;
+};
