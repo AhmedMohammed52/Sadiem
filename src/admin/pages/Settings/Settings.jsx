@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
-import {defaultSettings} from "../../data/setting";
+import { defaultSettings } from "../../data/setting";
+
 import {
   getSettings,
   saveSettings,
@@ -8,8 +9,12 @@ import {
   updateAdminPassword,
 } from "../../../services/settingsService";
 
+import { getAdminErrorMessage } from "../../utils/errorHandler";
+import { useAdminToast } from "../../../context/AdminToastContext";
+
 import SettingsNavigation from "./SettingsNavigation";
 import SettingsContent from "./SettingsContent";
+import SettingsContentSkeleton from "./SettingsContentSkeleton";
 import SettingsActions from "./SettingsActions";
 import PageHeader from "../../components/common/PageHeader";
 
@@ -43,13 +48,15 @@ function getComparableValue(value) {
 }
 
 export default function Settings() {
+  const { showToast } = useAdminToast();
+
   const [settings, setSettings] = useState(() => cloneData(defaultSettings));
+
   const [savedSettings, setSavedSettings] = useState(() =>
     cloneData(defaultSettings),
   );
 
   const [activeSection, setActiveSection] = useState("store");
-  const [saveMessage, setSaveMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -57,13 +64,12 @@ export default function Settings() {
     JSON.stringify(getComparableValue(settings)) !==
     JSON.stringify(getComparableValue(savedSettings));
 
+  // تحميل بيانات الإعدادات
   useEffect(() => {
     let active = true;
 
     async function loadData() {
       try {
-        setLoading(true);
-
         const [storeData, accountData] = await Promise.all([
           getSettings(),
           getAdminAccount(),
@@ -80,13 +86,20 @@ export default function Settings() {
         setSettings(loaded);
         setSavedSettings(cloneData(loaded));
       } catch (error) {
-        console.error("Settings loading error:", error);
-
         if (active) {
-          setSaveMessage(error.message || "تعذر تحميل إعدادات المتجر.");
+          showToast({
+            type: "error",
+            title: "تعذر تحميل الإعدادات",
+            message: getAdminErrorMessage(
+              error,
+              "حدث خطأ أثناء تحميل إعدادات المتجر. حاول تحديث الصفحة.",
+            ),
+          });
         }
       } finally {
-        if (active) setLoading(false);
+        if (active) {
+          setLoading(false);
+        }
       }
     }
 
@@ -95,8 +108,9 @@ export default function Settings() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [showToast]);
 
+  // تحديث الإعدادات
   const update = (section, field, value) => {
     setSettings((previous) => ({
       ...previous,
@@ -105,16 +119,14 @@ export default function Settings() {
         [field]: value,
       },
     }));
-
-    setSaveMessage("");
   };
 
+  // حفظ التغييرات
   const handleSave = async () => {
-    if (!isDirty || saving) return;
+    if (!isDirty || saving || loading) return;
 
     try {
       setSaving(true);
-      setSaveMessage("");
 
       const updated = await saveSettings(settings, savedSettings);
 
@@ -126,33 +138,39 @@ export default function Settings() {
 
       setSettings(nextSettings);
       setSavedSettings(cloneData(nextSettings));
-      setSaveMessage("تم حفظ الإعدادات بنجاح.");
-    } catch (error) {
-      console.error("Settings saving error:", error);
 
-      setSaveMessage(error.message || "تعذر حفظ الإعدادات، حاول مرة أخرى.");
+      showToast({
+        type: "success",
+        title: "تم حفظ الإعدادات",
+        message: "تم حفظ جميع التعديلات بنجاح.",
+      });
+    } catch (error) {
+      showToast({
+        type: "error",
+        title: "تعذر حفظ الإعدادات",
+        message: getAdminErrorMessage(
+          error,
+          "حدث خطأ أثناء حفظ الإعدادات. حاول مرة أخرى.",
+        ),
+      });
     } finally {
       setSaving(false);
     }
   };
 
+  // التراجع عن التعديلات
   const handleReset = () => {
+    if (loading || saving) return;
+
     setSettings(cloneData(savedSettings));
-    setSaveMessage("");
   };
 
+  // تغيير قسم الإعدادات
   const handleSectionChange = (section) => {
-    setActiveSection(section);
-    setSaveMessage("");
-  };
+    if (loading) return;
 
-  if (loading) {
-    return (
-      <div className="flex min-h-75 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#E9EBF0] border-t-[#4059E8]" />
-      </div>
-    );
-  }
+    setActiveSection(section);
+  };
 
   return (
     <div className="space-y-5">
@@ -174,32 +192,24 @@ export default function Settings() {
       />
 
       <main className="min-w-0 space-y-4">
-        <SettingsContent
-          activeSection={activeSection}
-          settings={settings}
-          update={update}
-          onPasswordSave={updateAdminPassword}
-        />
+        {loading ? (
+          <SettingsContentSkeleton />
+        ) : (
+          <SettingsContent
+            activeSection={activeSection}
+            settings={settings}
+            update={update}
+            onPasswordSave={updateAdminPassword}
+          />
+        )}
 
         <SettingsActions
           isDirty={isDirty}
           saving={saving}
+          loading={loading}
           onSave={handleSave}
           onReset={handleReset}
         />
-
-        {saveMessage && (
-          <div
-            role="status"
-            className={`rounded-lg border px-4 py-3 text-xs font-semibold ${
-              saveMessage.includes("بنجاح")
-                ? "border-[#D5F0E3] bg-[#E8F7F0] text-[#16865B]"
-                : "border-[#FDE7C3] bg-[#FFF6E5] text-[#B7791F]"
-            }`}
-          >
-            {saveMessage}
-          </div>
-        )}
       </main>
     </div>
   );

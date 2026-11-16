@@ -1,51 +1,74 @@
 import { useState } from "react";
 import { LockKeyhole, Eye, EyeOff, UserRound, Mail } from "lucide-react";
+
 import { SettingsCard } from "./SettingsFields";
+import { getAdminErrorMessage } from "../../utils/errorHandler";
+import { useAdminToast } from "../../../context/AdminToastContext";
 
 export default function AccountSettings({ settings, onPasswordSave }) {
+  const { showToast } = useAdminToast();
+
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
+  // إعادة ضبط نموذج كلمة المرور
   const resetPasswordForm = () => {
     setPassword("");
     setConfirmPassword("");
-    setMessage("");
-    setError("");
+    setShowPassword(false);
+    setShowConfirmPassword(false);
     setPasswordOpen(false);
   };
 
+  // حفظ كلمة المرور
   const handlePasswordSave = async (event) => {
     event.preventDefault();
 
-    setError("");
-    setMessage("");
+    if (saving) return;
 
     if (password.length < 8) {
-      setError("كلمة المرور يجب ألا تقل عن 8 أحرف.");
+      showToast({
+        type: "error",
+        title: "كلمة المرور غير صالحة",
+        message: "كلمة المرور يجب ألا تقل عن 8 أحرف.",
+      });
       return;
     }
 
     if (password !== confirmPassword) {
-      setError("كلمتا المرور غير متطابقتين.");
+      showToast({
+        type: "error",
+        title: "كلمتا المرور غير متطابقتين",
+        message: "تأكد من كتابة كلمة المرور نفسها في الحقلين.",
+      });
       return;
     }
 
     try {
       setSaving(true);
+
       await onPasswordSave(password);
 
-      setMessage("تم تغيير كلمة المرور بنجاح.");
-      setPassword("");
-      setConfirmPassword("");
-    } catch (err) {
-      console.error("Password update error:", err);
-      setError(err.message || "تعذر تغيير كلمة المرور.");
+      resetPasswordForm();
+
+      showToast({
+        type: "success",
+        title: "تم تغيير كلمة المرور",
+        message: "تم تحديث كلمة مرور حساب المدير بنجاح.",
+      });
+    } catch (error) {
+      showToast({
+        type: "error",
+        title: "تعذر تغيير كلمة المرور",
+        message: getAdminErrorMessage(
+          error,
+          "حدث خطأ أثناء تحديث كلمة المرور. حاول مرة أخرى.",
+        ),
+      });
     } finally {
       setSaving(false);
     }
@@ -63,6 +86,7 @@ export default function AccountSettings({ settings, onPasswordSave }) {
               <UserRound size={15} className="text-[#4059E8]" />
               اسم المدير
             </label>
+
             <div className="flex h-10 items-center rounded-lg border border-[#E9EBF0] bg-[#F8F9FB] px-3 text-sm text-[#777D8A]">
               {settings.account.name || "غير محدد"}
             </div>
@@ -73,6 +97,7 @@ export default function AccountSettings({ settings, onPasswordSave }) {
               <Mail size={15} className="text-[#4059E8]" />
               البريد الإلكتروني
             </label>
+
             <div
               dir="ltr"
               className="flex h-10 items-center rounded-lg border border-[#E9EBF0] bg-[#F8F9FB] px-3 text-sm text-[#777D8A]"
@@ -97,10 +122,12 @@ export default function AccountSettings({ settings, onPasswordSave }) {
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#EEF0FF] text-[#4059E8]">
               <LockKeyhole size={18} />
             </div>
+
             <div>
               <p className="text-sm font-semibold text-[#22252D]">
                 كلمة المرور
               </p>
+
               <p className="mt-1 text-[11px] text-[#777D8A]">
                 تحديث كلمة مرور حساب المدير
               </p>
@@ -109,12 +136,9 @@ export default function AccountSettings({ settings, onPasswordSave }) {
 
           <button
             type="button"
-            onClick={() => {
-              setPasswordOpen((value) => !value);
-              setError("");
-              setMessage("");
-            }}
-            className="rounded-lg bg-[#EEF0FF] px-3 py-2 text-xs font-semibold text-[#4059E8] transition hover:bg-[#E1E5FF]"
+            onClick={() => setPasswordOpen((value) => !value)}
+            disabled={saving}
+            className="rounded-lg bg-[#EEF0FF] px-3 py-2 text-xs font-semibold text-[#4059E8] transition hover:bg-[#E1E5FF] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {passwordOpen ? "إلغاء" : "تغيير كلمة المرور"}
           </button>
@@ -177,23 +201,12 @@ export default function AccountSettings({ settings, onPasswordSave }) {
               </div>
             </div>
 
-            {error && (
-              <p className="rounded-lg bg-[#FDECEC] px-3 py-2 text-xs text-[#E05252]">
-                {error}
-              </p>
-            )}
-
-            {message && (
-              <p className="rounded-lg bg-[#E8F7F0] px-3 py-2 text-xs text-[#16865B]">
-                {message}
-              </p>
-            )}
-
             <div className="flex justify-end gap-2">
               <button
                 type="button"
                 onClick={resetPasswordForm}
-                className="rounded-lg border border-[#E9EBF0] px-4 py-2 text-xs font-semibold text-[#777D8A] hover:bg-[#F8F9FB]"
+                disabled={saving}
+                className="rounded-lg border border-[#E9EBF0] px-4 py-2 text-xs font-semibold text-[#777D8A] hover:bg-[#F8F9FB] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 إغلاق
               </button>

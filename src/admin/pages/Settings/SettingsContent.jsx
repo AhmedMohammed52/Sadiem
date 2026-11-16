@@ -1,12 +1,10 @@
 import StoreSettings from "./StoreSettings";
 import SocialSettings from "./SocialSettings";
-import GeneralSettings from "./GeneralSettings";
 import AccountSettings from "./AccountSettings";
 
 const COMPONENTS = {
   store: StoreSettings,
   social: SocialSettings,
-  general: GeneralSettings,
   account: AccountSettings,
 };
 
