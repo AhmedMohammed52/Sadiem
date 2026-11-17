@@ -1,51 +1,47 @@
-import catPerfumes from "../assets/3.jfif";
-import catSkincare from "../assets/4.jfif";
-import catBody from "../assets/1.jfif";
-import catHair from "../assets/2.jfif";
+import heroPerfumes from "../assets/hero-product.png";
+import heroSkincare from "../assets/hero-skincare.png";
+import heroBody from "../assets/hero-body.png";
+import heroHair from "../assets/hero-hair.png";
 
 export const SLIDES_DATA = [
   {
     id: "perfumes",
     subtitle: "عطور سديم",
-    title: "عطرك.. توقيعك الخاص",
-    description: "اكتشفي عطورًا تعبّر عن شخصيتك وتبقى في الذاكرة.",
-    buttonText: "تسوقي الآن",
+    title: "لأن حضورك يبدأ من عطرك",
+    description: "عطور مختارة بعناية، تترك انطباعًا لا يُنسى.",
+    buttonText: "اكتشفي العطور",
     link: "/shop?category=perfumes",
-    image: catPerfumes,
-    alt: "مجموعة عطور سديم",
-    objectPosition: "lg:object-[20%_center]",
+    desktopImage: heroPerfumes,
+    alt: "تشكيلة عطور سديم",
   },
   {
     id: "skincare",
     subtitle: "العناية بالبشرة",
-    title: "بشرة مشرقة تفيض بالنضارة",
-    description: "منتجات مخصصة لترطيب وتغذية بشرتك بأعلى جودة.",
+    title: "امنحي بشرتك عناية تستحقها",
+    description: "ترطيب وعناية لبشرة أكثر نضارة.",
     buttonText: "اكتشفي المجموعة",
     link: "/shop?category=skincare",
-    image: catSkincare,
-    alt: "مجموعة العناية بالبشرة",
-    objectPosition: "lg:object-[18%_center]",
+    desktopImage: heroSkincare,
+    alt: "مجموعة منتجات العناية بالبشرة",
   },
   {
     id: "body",
     subtitle: "العناية بالجسم",
-    title: "نعومة ودلال يستحقه جسمك",
-    description: "روتين متكامل لعناية فائقة وترطيب يدوم طوال اليوم.",
-    buttonText: "تسوقي المجموعة",
+    title: "عناية تُلامس نعومتك",
+    description: "روتين غني بالترطيب لنعومة تدوم.",
+    buttonText: "اكتشفي المجموعة",
     link: "/shop?category=body",
-    image: catBody,
-    alt: "مجموعة العناية بالجسم",
-    objectPosition: "lg:object-[22%_center]",
+    desktopImage: heroBody,
+    alt: "مجموعة منتجات العناية بالجسم",
   },
   {
     id: "hair",
     subtitle: "العناية بالشعر",
-    title: "شعر قوي، حيوي، ولامع",
-    description: "زيوت ومستحضرات طبيعية تمنح شعرك الكثافة واللمعان.",
-    buttonText: "تسوقي الآن",
+    title: "لشعر يتحدث عن جمالك",
+    description: "زيوت ومستحضرات تمنح شعرك حيوية ولمعانًا.",
+    buttonText: "اكتشفي المجموعة",
     link: "/shop?category=hair",
-    image: catHair,
-    alt: "مجموعة العناية بالشعر",
-    objectPosition: "lg:object-[16%_center]",
+    desktopImage: heroHair,
+    alt: "مجموعة منتجات العناية بالشعر",
   },
 ];

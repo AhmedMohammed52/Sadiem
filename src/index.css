@@ -9,11 +9,13 @@
   --font-sans: "Cairo", system-ui, sans-serif;
   --font-display: "El Messiri", "Cairo", serif;
   --font-latin: "Marcellus", serif;
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 8px);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -33,6 +35,7 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
   --color-blush: var(--blush);
   --color-blush-soft: var(--blush-soft);
   --color-blush-deep: var(--blush-deep);
@@ -44,48 +47,67 @@
 
 :root {
   --radius: 0.375rem;
+
   --background: oklch(1 0 0);
   --foreground: oklch(0.205 0 0);
+
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.205 0 0);
+
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.205 0 0);
+
   --primary: oklch(0.205 0 0);
   --primary-foreground: oklch(1 0 0);
+
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
+
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
+
   --accent: oklch(0.89 0.072 343);
   --accent-foreground: oklch(0.205 0 0);
+
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(1 0 0);
+
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.205 0 0);
+
+  /* Sadeem Brand Colors */
   --blush: oklch(0.89 0.072 343);
   --blush-soft: oklch(0.96 0.025 343);
   --blush-deep: oklch(0.55 0.13 350);
+
   --ink: oklch(0.205 0 0);
   --ink-foreground: oklch(1 0 0);
+
   --whatsapp: oklch(0.72 0.17 150);
   --star: oklch(0.78 0.14 80);
+
+  /* Ambient Colors */
   --ambient-light: color-mix(in oklab, var(--blush) 24%, transparent);
   --ambient-fade: color-mix(in oklab, var(--blush) 8%, transparent);
+
   --ambient-wash: radial-gradient(
     ellipse 110% 90% at 100% 0%,
     var(--ambient-light),
     var(--ambient-fade) 48%,
     transparent 82%
   );
+
   --ambient-wash-reverse: radial-gradient(
     ellipse 110% 80% at 0% 100%,
     var(--ambient-light),
     var(--ambient-fade) 45%,
     transparent 85%
   );
+
   --ambient-desktop-light: color-mix(in oklab, var(--blush) 12%, transparent);
   --ambient-desktop-fade: color-mix(in oklab, var(--blush) 3%, transparent);
+
   --ambient-desktop-wash: radial-gradient(
     ellipse 65% 65% at 12% 72%,
     var(--ambient-desktop-light),
@@ -94,13 +116,19 @@
   );
 }
 
+/* ========================================
+   BASE
+======================================== */
+
 @layer base {
   * {
     border-color: var(--color-border);
   }
+
   html {
     -webkit-tap-highlight-color: transparent;
   }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
@@ -109,25 +137,36 @@
   }
 }
 
+/* ========================================
+   GENERAL ANIMATIONS
+======================================== */
+
 @keyframes rise {
   from {
     opacity: 0;
     transform: translateY(16px);
   }
+
   to {
     opacity: 1;
     transform: none;
   }
 }
+
 @utility animate-rise {
   animation: rise 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
+
+/* ========================================
+   AMBIENT SECTIONS
+======================================== */
 
 .ambient-section {
   position: relative;
   isolation: isolate;
   overflow: clip;
 }
+
 .ambient-section::before {
   content: "";
   position: absolute;
@@ -136,67 +175,158 @@
   pointer-events: none;
   background-image: var(--ambient-wash);
 }
+
 .ambient-section-reverse::before {
   background-image: var(--ambient-wash-reverse);
 }
+
+.ambient-section::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+
+  background-image:
+    radial-gradient(
+      circle,
+      color-mix(in oklab, var(--blush) 25%, transparent) 0%,
+      color-mix(in oklab, var(--blush) 10%, transparent) 45%,
+      transparent 72%
+    ),
+    radial-gradient(
+      circle,
+      color-mix(in oklab, var(--blush) 20%, transparent) 0%,
+      color-mix(in oklab, var(--blush) 8%, transparent) 45%,
+      transparent 72%
+    ),
+    radial-gradient(
+      circle,
+      color-mix(in oklab, var(--blush) 17%, transparent) 0%,
+      transparent 70%
+    );
+
+  background-size:
+    220px 220px,
+    170px 170px,
+    130px 130px;
+
+  background-position:
+    8% 25%,
+    90% 65%,
+    48% 90%;
+
+  background-repeat: no-repeat;
+
+  filter: blur(12px);
+  opacity: 0.85;
+}
+
 .botanical-accent {
   opacity: 0.17;
 }
+
 .botanical-drift {
   animation: botanical-breathe 20s ease-in-out infinite;
 }
-@media (min-width: 1024px) {
-  .hero-slide {
-    --hero-position: 0.2;
-  }
-  .hero-slide[data-category="skincare"] {
-    --hero-position: 0.18;
-  }
-  .hero-slide[data-category="body"] {
-    --hero-position: 0.22;
-  }
-  .hero-slide[data-category="hair"] {
-    --hero-position: 0.16;
-  }
-  .hero-main-image {
-    --image-start: calc((100% - 512px) * var(--hero-position));
-    mask-image: linear-gradient(
-      to right,
-      transparent var(--image-start),
-      var(--ink) calc(var(--image-start) + 64px),
-      var(--ink) calc(var(--image-start) + 448px),
-      transparent calc(var(--image-start) + 512px)
-    );
-  }
-  .category-ambient::before {
-    inset: 3% 0;
-    background-image: var(--ambient-desktop-wash);
-    filter: blur(32px);
-  }
-}
+
 @keyframes botanical-breathe {
   0%,
   100% {
     opacity: 0.14;
     transform: translateY(0);
   }
+
   50% {
     opacity: 0.2;
     transform: translateY(-4px);
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .botanical-drift {
-    animation: none;
+/* ========================================
+   HERO
+======================================== */
+
+.sadeem-hero {
+  background:
+    radial-gradient(
+      ellipse at 12% 75%,
+      color-mix(in oklab, var(--blush) 18%, transparent),
+      transparent 48%
+    ),
+    radial-gradient(
+      ellipse at 90% 15%,
+      color-mix(in oklab, var(--blush-soft) 65%, transparent),
+      transparent 45%
+    ),
+    linear-gradient(
+      110deg,
+      var(--background) 0%,
+      color-mix(in oklab, var(--blush-soft) 30%, white) 50%,
+      var(--background) 100%
+    );
+}
+
+/* ========================================
+   HERO ANIMATIONS
+======================================== */
+
+@keyframes hero-product-enter {
+  0% {
+    opacity: 0;
+    transform: translateX(-65px) scale(0.88);
   }
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
+
+  65% {
+    opacity: 1;
+    transform: translateX(8px) scale(1.025);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
   }
 }
+
+.hero-product-enter {
+  animation: hero-product-enter 1s cubic-bezier(0.2, 0.75, 0.25, 1) both;
+}
+
+@keyframes hero-product-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.hero-product-image {
+  filter: drop-shadow(0 25px 22px rgba(70, 35, 50, 0.15));
+  animation: hero-product-float 5s ease-in-out 1s infinite;
+}
+
+@keyframes hero-content-enter {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-content-enter {
+  animation: hero-content-enter 0.75s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+/* ========================================
+   TOAST ANIMATIONS
+======================================== */
 
 @keyframes toast-in {
   from {
@@ -228,19 +358,26 @@
   animation: toast-progress 2.5s linear forwards;
 }
 
-/* Skeleton Loading */
+/* ========================================
+   SKELETON LOADING
+======================================== */
+
 .skeleton-shimmer {
   position: relative;
   overflow: hidden;
+
   background: color-mix(in oklab, var(--muted) 85%, white);
+
   background-image: linear-gradient(
     100deg,
     transparent 20%,
     color-mix(in oklab, var(--blush) 35%, white) 50%,
     transparent 80%
   );
+
   background-size: 200% 100%;
   background-repeat: no-repeat;
+
   animation: skeleton-shimmer 1.6s ease-in-out infinite;
 }
 
@@ -251,13 +388,6 @@
 
   to {
     background-position: -200% 0;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .skeleton-shimmer {
-    animation: none;
-    background-image: none;
   }
 }
 
@@ -281,7 +411,6 @@
   overflow: hidden;
   isolation: isolate;
 
-  /* خلفية ثابتة ومعتمة بالكامل */
   background: radial-gradient(
     ellipse at 50% 48%,
     #fff0f6 0%,
@@ -298,14 +427,12 @@
     visibility 0s linear 500ms;
 }
 
-/* إخفاء شاشة التحميل */
 .sadeem-preloader.is-hidden {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
 }
 
-/* محتوى شاشة التحميل */
 .sadeem-preloader-content {
   position: relative;
   z-index: 2;
@@ -319,7 +446,6 @@
   padding: 24px;
 }
 
-/* اللوجو */
 .sadeem-logo {
   display: flex;
   align-items: center;
@@ -352,7 +478,6 @@
   color: #171717;
 }
 
-/* الجملة أسفل اللوجو */
 .sadeem-tagline {
   margin-top: 18px;
 
@@ -365,7 +490,6 @@
   animation: sadeem-fade-up 900ms ease 200ms both;
 }
 
-/* شريط التحميل */
 .sadeem-loader {
   width: 110px;
   height: 3px;
@@ -390,7 +514,6 @@
   animation: sadeem-loading 1.3s ease-in-out infinite;
 }
 
-/* فقاعات الإضاءة الوردية */
 .sadeem-preloader::before,
 .sadeem-preloader::after {
   content: "";
@@ -424,7 +547,6 @@
   animation-delay: 1.5s;
 }
 
-/* Animations */
 @keyframes sadeem-loading {
   0% {
     transform: translateX(-120%);
@@ -471,7 +593,10 @@
   }
 }
 
-/* Responsive */
+/* ========================================
+   RESPONSIVE & REDUCED MOTION
+======================================== */
+
 @media (max-width: 480px) {
   .sadeem-logo {
     gap: 10px;
@@ -486,12 +611,23 @@
   }
 }
 
-/* تقليل الحركة حسب إعدادات الجهاز */
 @media (prefers-reduced-motion: reduce) {
+  .hero-product-enter,
+  .hero-product-image,
+  .hero-content-enter,
+  .botanical-drift,
+  .skeleton-shimmer,
   .sadeem-preloader *,
   .sadeem-preloader::before,
   .sadeem-preloader::after {
     animation: none !important;
     transition: none !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }
