@@ -201,43 +201,80 @@ function DetailsEditor({ category, details, onChange }) {
       )}
 
       <div className="space-y-3">
-        {details.map((detail, index) => (
-          <div
-            key={index}
-            className="rounded-xl border border-[#E9EBF0] bg-[#FAFAFC] p-3"
-          >
-            <div className="mb-2 flex items-center justify-between">
-              <span className="text-[11px] font-semibold text-[#999EAA]">
-                خاصية {index + 1}
-              </span>
+        {details.map((detail, index) => {
+          const isUsageInstructions = detail.label.trim() === "طريقة الاستخدام";
 
-              <button
-                type="button"
-                onClick={() => removeDetail(index)}
-                aria-label="حذف الخاصية"
-                className="text-[#A0A5B1] transition hover:text-red-500"
-              >
-                <Trash2 size={15} />
-              </button>
+          return (
+            <div
+              key={index}
+              className="rounded-xl border border-[#E9EBF0] bg-[#FAFAFC] p-3"
+            >
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-[#999EAA]">
+                  خاصية {index + 1}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => removeDetail(index)}
+                  aria-label="حذف الخاصية"
+                  className="text-[#A0A5B1] transition hover:text-red-500"
+                >
+                  <Trash2 size={15} />
+                </button>
+              </div>
+
+              {isUsageInstructions ? (
+                <div className="space-y-2">
+                  <input
+                    value={detail.label}
+                    onChange={(e) =>
+                      updateDetail(index, "label", e.target.value)
+                    }
+                    placeholder="اسم الخاصية"
+                    className={`${FIELD_STYLES} h-10 w-full`}
+                  />
+
+                  <textarea
+                    value={detail.value}
+                    onChange={(e) =>
+                      updateDetail(index, "value", e.target.value)
+                    }
+                    placeholder="اكتب طريقة الاستخدام، وكل خطوة في سطر منفصل..."
+                    rows={5}
+                    dir="auto"
+                    className={`${FIELD_STYLES} min-h-30 w-full resize-y py-3 leading-7`}
+                  />
+
+                  <p className="text-[11px] leading-5 text-[#999EAA]">
+                    يمكنك كتابة كل خطوة في سطر منفصل، وسيتم الاحتفاظ بتنسيق
+                    الأسطر عند حفظ المنتج.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <input
+                    value={detail.label}
+                    onChange={(e) =>
+                      updateDetail(index, "label", e.target.value)
+                    }
+                    placeholder="اسم الخاصية"
+                    className={`${FIELD_STYLES} h-10`}
+                  />
+
+                  <input
+                    value={detail.value}
+                    onChange={(e) =>
+                      updateDetail(index, "value", e.target.value)
+                    }
+                    placeholder="القيمة"
+                    className={`${FIELD_STYLES} h-10`}
+                  />
+                </div>
+              )}
             </div>
-
-            <div className="grid gap-2 sm:grid-cols-2">
-              <input
-                value={detail.label}
-                onChange={(e) => updateDetail(index, "label", e.target.value)}
-                placeholder="اسم الخاصية"
-                className={`${FIELD_STYLES} h-10`}
-              />
-
-              <input
-                value={detail.value}
-                onChange={(e) => updateDetail(index, "value", e.target.value)}
-                placeholder="القيمة"
-                className={`${FIELD_STYLES} h-10`}
-              />
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <button

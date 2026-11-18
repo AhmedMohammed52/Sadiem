@@ -221,7 +221,10 @@ export default function ProductInfo({
                     className="flex items-center justify-between gap-4 py-2"
                   >
                     <dt>{item.label}</dt>
-                    <dd className="font-semibold text-ink">{item.value}</dd>
+
+                    <dd className="font-semibold text-ink whitespace-pre-line">
+                      {item.value}
+                    </dd>
                   </div>
                 ))}
               </dl>
